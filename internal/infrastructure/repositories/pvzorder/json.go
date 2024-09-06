@@ -20,6 +20,8 @@ type pvzOrder struct {
 
 	IssuedAt   time.Time `json:"issued_at"`
 	ReturnedAt time.Time `json:"returned_at"`
+
+	DeletedAt time.Time `json:"deleted_at" `
 }
 
 type fileStruct struct {
@@ -97,6 +99,7 @@ func convertToRepo(order domain.PVZOrder) pvzOrder {
 		StorageTime: order.StorageTime,
 		IssuedAt:    order.IssuedAt,
 		ReturnedAt:  order.ReturnedAt,
+		DeletedAt:   time.Time{},
 	}
 }
 
@@ -133,7 +136,7 @@ func (J *JSONRepository) DeleteOrder(orderID string) error {
 
 	for i, order := range fileStruct.Orders {
 		if order.OrderID == orderID {
-			fileStruct.Orders = append(fileStruct.Orders[:i], fileStruct.Orders[i+1:]...)
+			fileStruct.Orders[i].DeletedAt = time.Now()
 			break
 		}
 	}
@@ -197,6 +200,9 @@ func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrd
 	skipped := 0
 	for _, order := range fileStruct.Orders {
 		if order.RecipientID == userID && (getOrdersOptions.PVZID == "" || order.PVZID == getOrdersOptions.PVZID) {
+			if !order.DeletedAt.IsZero() {
+				continue
+			}
 			if skipped < getOrdersOptions.Page*getOrdersOptions.PageSize {
 				skipped++
 				continue
@@ -243,6 +249,9 @@ func (J *JSONRepository) GetReturns(options ...abstractions.PaginationOptFunc) (
 	skipped := 0
 	for _, order := range fileStruct.Orders {
 		if !order.ReturnedAt.IsZero() {
+			if !order.DeletedAt.IsZero() {
+				continue
+			}
 			if skipped < paginationOptions.Page*paginationOptions.PageSize {
 				skipped++
 				continue

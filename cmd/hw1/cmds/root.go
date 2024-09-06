@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "hw1",
 	Short: "Homework 1",
 	Run: func(cmd *cobra.Command, args []string) {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("config").Value.String())
+		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
 
 		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
 
