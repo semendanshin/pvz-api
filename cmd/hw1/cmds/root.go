@@ -25,7 +25,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("config", "c", "orders.json", "config file")
+	rootCmd.PersistentFlags().StringP("orders", "o", "orders.json", "orders file")
 	rootCmd.PersistentFlags().StringP("pvz", "p", "1", "pvz id")
 
 	rootCmd.AddCommand(acceptDeliveryCmd)
