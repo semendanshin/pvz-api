@@ -44,6 +44,10 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 		{Title: "StorageTime", Width: 15},
 		{Title: "IssuedAt", Width: 20},
 		{Title: "ReturnedAt", Width: 20},
+		{Title: "Weight", Width: 10},
+		{Title: "Cost", Width: 10},
+		{Title: "Packaging", Width: 10},
+		{Title: "AdditionalFilm", Width: 15},
 	}
 	dataTable := table.New(
 		table.WithColumns(columns),

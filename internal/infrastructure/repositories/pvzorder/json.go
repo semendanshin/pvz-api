@@ -16,6 +16,11 @@ type pvzOrder struct {
 	PVZID       string `json:"pvz_id"`
 	RecipientID string `json:"recipient_id"`
 
+	Weight         int    `json:"weight"`
+	Cost           int    `json:"cost"`
+	Packaging      string `json:"packaging"`
+	AdditionalFilm bool   `json:"additional_film"`
+
 	ReceivedAt  time.Time     `json:"received_at"`
 	StorageTime time.Duration `json:"storage_time"`
 
@@ -81,26 +86,34 @@ func writeFile(pathToFile string, fileStruct fileStruct) error {
 
 func convertToDomain(order pvzOrder) domain.PVZOrder {
 	return domain.PVZOrder{
-		OrderID:     order.OrderID,
-		PVZID:       order.PVZID,
-		RecipientID: order.RecipientID,
-		ReceivedAt:  order.ReceivedAt,
-		StorageTime: order.StorageTime,
-		IssuedAt:    order.IssuedAt,
-		ReturnedAt:  order.ReturnedAt,
+		OrderID:        order.OrderID,
+		PVZID:          order.PVZID,
+		RecipientID:    order.RecipientID,
+		ReceivedAt:     order.ReceivedAt,
+		StorageTime:    order.StorageTime,
+		IssuedAt:       order.IssuedAt,
+		ReturnedAt:     order.ReturnedAt,
+		Weight:         order.Weight,
+		Cost:           order.Cost,
+		AdditionalFilm: order.AdditionalFilm,
+		Packaging:      domain.PackagingType(order.Packaging),
 	}
 }
 
 func convertToRepo(order domain.PVZOrder) pvzOrder {
 	return pvzOrder{
-		OrderID:     order.OrderID,
-		PVZID:       order.PVZID,
-		RecipientID: order.RecipientID,
-		ReceivedAt:  order.ReceivedAt,
-		StorageTime: order.StorageTime,
-		IssuedAt:    order.IssuedAt,
-		ReturnedAt:  order.ReturnedAt,
-		DeletedAt:   time.Time{},
+		OrderID:        order.OrderID,
+		PVZID:          order.PVZID,
+		RecipientID:    order.RecipientID,
+		ReceivedAt:     order.ReceivedAt,
+		StorageTime:    order.StorageTime,
+		IssuedAt:       order.IssuedAt,
+		ReturnedAt:     order.ReturnedAt,
+		DeletedAt:      time.Time{},
+		Weight:         order.Weight,
+		Cost:           order.Cost,
+		AdditionalFilm: order.AdditionalFilm,
+		Packaging:      string(order.Packaging),
 	}
 }
 

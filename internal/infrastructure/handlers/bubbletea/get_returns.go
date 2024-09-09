@@ -27,6 +27,10 @@ func newGetReturnsModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *ge
 		{Title: "StorageTime", Width: 15},
 		{Title: "IssuedAt", Width: 20},
 		{Title: "ReturnedAt", Width: 20},
+		{Title: "Weight", Width: 10},
+		{Title: "Cost", Width: 10},
+		{Title: "Packaging", Width: 10},
+		{Title: "AdditionalFilm", Width: 15},
 	}
 	dataTable := table.New(
 		table.WithColumns(columns),
@@ -98,6 +102,10 @@ func (m *getReturnsModel) View() string {
 				order.StorageTime.String(),
 				order.IssuedAt.Format("2006-01-02 15:04:05"),
 				order.ReturnedAt.Format("2006-01-02 15:04:05"),
+				strconv.Itoa(order.Weight),
+				strconv.Itoa(order.Cost),
+				order.Packaging.String(),
+				strconv.FormatBool(order.AdditionalFilm),
 			}
 		}
 		m.table.SetRows(rows)

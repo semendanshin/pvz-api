@@ -2,8 +2,6 @@ package cmds
 
 import (
 	"github.com/spf13/cobra"
-	"homework/internal/infrastructure/repositories/pvzorder"
-	"homework/internal/usecases"
 )
 
 var acceptReturnCmd = &cobra.Command{
@@ -12,9 +10,10 @@ var acceptReturnCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(2),
 	Example: "hw1 accept_return <recipient_id> <order_id>",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
+		ordersFile, _ := cmd.Flags().GetString("orders")
+		pvzID, _ := cmd.Flags().GetString("pvz")
 
-		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
+		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
 
 		recipientID := args[0]
 		orderID := args[1]

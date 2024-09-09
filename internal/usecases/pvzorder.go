@@ -19,19 +19,21 @@ var _ abstractions.IPVZOrderUseCase = &PVZOrderUseCase{}
 // PVZOrderUseCase is a use case for order operations
 type PVZOrderUseCase struct {
 	repo         abstractions.PVZOrderRepository
+	packager     abstractions.OrderPackagerInterface
 	currentPVZID string
 }
 
 // NewPVZOrderUseCase creates a new order use case
-func NewPVZOrderUseCase(repo abstractions.PVZOrderRepository, currentPVZID string) *PVZOrderUseCase {
+func NewPVZOrderUseCase(repo abstractions.PVZOrderRepository, packager abstractions.OrderPackagerInterface, currentPVZID string) *PVZOrderUseCase {
 	return &PVZOrderUseCase{
 		repo:         repo,
+		packager:     packager,
 		currentPVZID: currentPVZID,
 	}
 }
 
 // AcceptOrderDelivery accepts order delivery
-func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration) error {
+func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
 	_, err := P.repo.GetOrder(orderID)
 	if err == nil {
 		return fmt.Errorf("%w: order already exists", domain.ErrAlreadyExists)
@@ -39,12 +41,32 @@ func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storag
 		return err
 	}
 
+	if packaging == domain.PackagingTypeFilm && additionalFilm {
+		return fmt.Errorf("%w: additional film is not allowed for film packaging", domain.ErrInvalidArgument)
+	}
+
 	order := domain.PVZOrder{
-		OrderID:     orderID,
-		PVZID:       P.currentPVZID,
-		RecipientID: recipientID,
-		ReceivedAt:  time.Now(),
-		StorageTime: storageTime,
+		OrderID:        orderID,
+		PVZID:          P.currentPVZID,
+		RecipientID:    recipientID,
+		ReceivedAt:     time.Now(),
+		StorageTime:    storageTime,
+		Cost:           cost,
+		Weight:         weight,
+		Packaging:      packaging,
+		AdditionalFilm: additionalFilm,
+	}
+
+	order, err = P.packager.PackageOrder(order, packaging, additionalFilm)
+	if err != nil {
+		return err
+	}
+
+	if additionalFilm {
+		order, err = P.packager.PackageOrder(order, domain.PackagingTypeFilm, false)
+		if err != nil {
+			return err
+		}
 	}
 
 	return P.repo.CreateOrder(order)

@@ -2,8 +2,6 @@ package cmds
 
 import (
 	"github.com/spf13/cobra"
-	"homework/internal/infrastructure/repositories/pvzorder"
-	"homework/internal/usecases"
 )
 
 var giveOrderToClientCmd = &cobra.Command{
@@ -12,9 +10,10 @@ var giveOrderToClientCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	Example: "hw1 give_orders <order_id1> <order_id2> ...",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
+		ordersFile, _ := cmd.Flags().GetString("orders")
+		pvzID, _ := cmd.Flags().GetString("pvz")
 
-		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
+		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
 
 		err := pvzOrderUseCase.GiveOrderToClient(args)
 		if err != nil {
