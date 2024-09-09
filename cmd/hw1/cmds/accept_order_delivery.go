@@ -13,7 +13,7 @@ var acceptDeliveryCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(3),
 	Example: "hw1 accept_delivery <order_id> <recipient_id> <storage_time: 1h30m>",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("config").Value.String())
+		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
 
 		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
 

@@ -12,7 +12,7 @@ var returnOrderDeliveryCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Example: "hw1 return_delivery <order_id>",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("config").Value.String())
+		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
 
 		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
 

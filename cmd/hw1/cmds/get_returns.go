@@ -13,7 +13,7 @@ var getReturnsCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Example: "hw1 get_returns",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("config").Value.String())
+		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
 
 		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
 

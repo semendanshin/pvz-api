@@ -12,7 +12,7 @@ var giveOrderToClientCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	Example: "hw1 give_orders <order_id1> <order_id2> ...",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("config").Value.String())
+		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
 
 		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
 
