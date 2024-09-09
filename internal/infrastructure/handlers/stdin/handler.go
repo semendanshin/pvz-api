@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"homework/internal/abstractions"
+	"homework/internal/domain"
 	"os"
 	"strconv"
 	"strings"
@@ -28,9 +29,13 @@ const (
 
 // AcceptOrderCommandInput is a struct for accept order command input
 type AcceptOrderCommandInput struct {
-	OrderID     string
-	RecipientID string
-	StorageTime time.Duration
+	OrderID        string
+	RecipientID    string
+	StorageTime    time.Duration
+	Weight         int
+	Cost           int
+	Packaging      domain.PackagingType
+	AdditionalFilm bool
 }
 
 // ReturnOrderCommandInput is a struct for return order command input
@@ -91,8 +96,8 @@ func (h *Handler) Run() error {
 
 		switch commandText {
 		case AcceptOrderCommand:
-			if len(args) < 3 {
-				_, err := fmt.Println("Not enough arguments\nUsage: accept_delivery <order_id> <recipient_id> <storage_time>")
+			if len(args) < 7 {
+				_, err := fmt.Println("Not enough arguments\nUsage: accept_delivery <order_id> <recipient_id> <storage_time: 1h30m> <cost> <weight> <packaging> <additional_film: y/n>")
 				if err != nil {
 					return err
 				}
@@ -115,12 +120,52 @@ func (h *Handler) Run() error {
 				}
 				continue
 			}
+			cost, err := strconv.Atoi(args[3])
+			if err != nil {
+				_, err := fmt.Println("Invalid cost")
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
+			weight, err := strconv.Atoi(args[4])
+			if err != nil {
+				_, err := fmt.Println("Invalid weight")
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
+			packaging, err := domain.NewPackagingType(args[5])
+			if err != nil {
+				_, err := fmt.Println("Invalid packaging type")
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
+			if args[6] != "y" && args[6] != "n" {
+				_, err := fmt.Println("Invalid additional film")
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
+			additionalFilm := args[6] == "y"
 
 			command = AcceptOrderCommand
 			input = AcceptOrderCommandInput{
-				OrderID:     args[0],
-				RecipientID: args[1],
-				StorageTime: time.Duration(storageTime) * time.Hour,
+				OrderID:        args[0],
+				RecipientID:    args[1],
+				StorageTime:    time.Duration(storageTime) * time.Hour,
+				Cost:           cost,
+				Weight:         weight,
+				Packaging:      packaging,
+				AdditionalFilm: additionalFilm,
 			}
 		case ReturnOrderCommand:
 			if len(args) < 1 {
@@ -199,7 +244,10 @@ func (h *Handler) Handle(command Command, input CommandInput) error {
 	switch command {
 	case AcceptOrderCommand:
 		input := input.(AcceptOrderCommandInput)
-		err := h.useCase.AcceptOrderDelivery(input.OrderID, input.RecipientID, input.StorageTime)
+		err := h.useCase.AcceptOrderDelivery(
+			input.OrderID, input.RecipientID, input.StorageTime,
+			input.Cost, input.Weight, input.Packaging, input.AdditionalFilm,
+		)
 		if err != nil {
 			return err
 		}
