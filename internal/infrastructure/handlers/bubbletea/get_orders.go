@@ -5,7 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"homework/internal/abstractions"
-	"strconv"
+	"homework/internal/domain"
+	"time"
 )
 
 var _ tea.Model = &getOrdersModel{}
@@ -19,9 +20,12 @@ type getOrdersModel struct {
 
 	userID string
 
-	changed  bool
-	page     int
-	pageSize int
+	data    []domain.PVZOrder
+	changed bool
+
+	cursorCreatedAt time.Time
+	cursorHistory   []time.Time
+	pageSize        int
 }
 
 // newGetOrdersModel creates a new getOrdersModel
@@ -47,10 +51,12 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 	input.Focus()
 
 	return &getOrdersModel{
-		useCase:     useCase,
-		pageSize:    pageSize,
-		table:       dataTable,
-		userIDInput: input,
+		useCase:       useCase,
+		pageSize:      pageSize,
+		table:         dataTable,
+		userIDInput:   input,
+		data:          make([]domain.PVZOrder, 0),
+		cursorHistory: make([]time.Time, 0),
 	}
 }
 
@@ -61,6 +67,24 @@ func (m *getOrdersModel) Init() tea.Cmd {
 
 // Update updates the model
 func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	paginateDown := func() {
+		if len(m.data) > 1 {
+			m.cursorHistory = append(m.cursorHistory, m.cursorCreatedAt)
+			m.cursorCreatedAt = m.data[1].ReceivedAt
+			m.changed = true
+		}
+	}
+
+	paginateUp := func() {
+		if len(m.data) != 0 {
+			if len(m.cursorHistory) != 0 {
+				m.cursorCreatedAt = m.cursorHistory[len(m.cursorHistory)-1]
+				m.cursorHistory = m.cursorHistory[:len(m.cursorHistory)-1]
+				m.changed = true
+			}
+		}
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -72,14 +96,9 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 		case tea.KeyDown:
-			m.page++
-			m.changed = true
+			paginateDown()
 		case tea.KeyUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
+			paginateUp()
 		case tea.KeyEnter:
 			if m.userIDInput.Focused() {
 				m.userID = m.userIDInput.Value()
@@ -87,18 +106,19 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.userIDInput.Blur()
 			}
 		default:
+			switch msg.String() {
+			case "j":
+				paginateDown()
+			case "k":
+				paginateUp()
+			}
 		}
 	case tea.MouseMsg:
 		switch tea.MouseEvent(msg).Button {
 		case tea.MouseButtonWheelDown:
-			m.page++
-			m.changed = true
+			paginateDown()
 		case tea.MouseButtonWheelUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
+			paginateUp()
 		default:
 		}
 	default:
@@ -116,16 +136,10 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View returns the view of the model
 func (m *getOrdersModel) View() string {
 	if m.changed {
-		paginationOpts, err := abstractions.NewPaginationOptions(
-			abstractions.WithPage(m.page),
-			abstractions.WithPageSize(m.pageSize),
-		)
-		if err != nil {
-			return err.Error()
-		}
 		orders, err := m.useCase.GetOrders(
 			m.userID,
-			abstractions.WithPaginationOptions(paginationOpts),
+			abstractions.WithCursorCreatedAt(m.cursorCreatedAt),
+			abstractions.WithLimit(m.pageSize),
 		)
 		if err != nil {
 			return err.Error()
@@ -143,6 +157,7 @@ func (m *getOrdersModel) View() string {
 			}
 		}
 		m.table.SetRows(rows)
+		m.data = orders
 		m.changed = false
 	}
 
@@ -150,5 +165,5 @@ func (m *getOrdersModel) View() string {
 		return m.userIDInput.View()
 	}
 
-	return m.table.View() + "\n" + "Page: " + strconv.Itoa(m.page+1) + "\n" + m.table.HelpView()
+	return m.table.View() + "\n\n" + m.table.HelpView()
 }

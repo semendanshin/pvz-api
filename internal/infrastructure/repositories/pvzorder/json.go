@@ -5,6 +5,7 @@ import (
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -197,21 +198,34 @@ func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrd
 	}
 
 	orders := make([]domain.PVZOrder, 0)
-	skipped := 0
 	for _, order := range fileStruct.Orders {
 		if order.RecipientID == userID && (getOrdersOptions.PVZID == "" || order.PVZID == getOrdersOptions.PVZID) {
 			if !order.DeletedAt.IsZero() {
 				continue
 			}
-			if skipped < getOrdersOptions.Page*getOrdersOptions.PageSize {
-				skipped++
-				continue
-			}
 			orders = append(orders, convertToDomain(order))
-			if len(orders) == getOrdersOptions.PageSize {
+		}
+	}
+
+	slices.SortFunc(orders, func(i, j domain.PVZOrder) int {
+		return int(j.ReceivedAt.Sub(i.ReceivedAt))
+	})
+
+	if getOrdersOptions.LastNOrders != 0 && len(orders) > getOrdersOptions.LastNOrders {
+		orders = orders[:getOrdersOptions.LastNOrders]
+	}
+
+	if !getOrdersOptions.CursorCreatedAt.IsZero() {
+		for i, order := range orders {
+			if order.ReceivedAt.Before(getOrdersOptions.CursorCreatedAt) || order.ReceivedAt.Equal(getOrdersOptions.CursorCreatedAt) {
+				orders = orders[i:]
 				break
 			}
 		}
+	}
+
+	if getOrdersOptions.Limit != 0 && len(orders) > getOrdersOptions.Limit {
+		orders = orders[:getOrdersOptions.Limit]
 	}
 
 	return orders, nil
@@ -234,7 +248,7 @@ func (J *JSONRepository) GetOrder(orderID string) (domain.PVZOrder, error) {
 }
 
 // GetReturns gets returns
-func (J *JSONRepository) GetReturns(options ...abstractions.PaginationOptFunc) ([]domain.PVZOrder, error) {
+func (J *JSONRepository) GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return nil, err

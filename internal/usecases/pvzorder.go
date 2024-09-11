@@ -152,6 +152,6 @@ func (P PVZOrderUseCase) AcceptReturn(userID, orderID string) error {
 }
 
 // GetReturns gets returns
-func (P PVZOrderUseCase) GetReturns(options ...abstractions.PaginationOptFunc) ([]domain.PVZOrder, error) {
+func (P PVZOrderUseCase) GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
 	return P.repo.GetReturns(options...)
 }
