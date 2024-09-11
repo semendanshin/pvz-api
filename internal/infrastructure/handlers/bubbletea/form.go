@@ -55,6 +55,7 @@ func (m *FormModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if len(m.inputs) > 0 {
 					m.inputs[0].Focus()
 				}
+				m.err = nil
 				return m, tea.Quit
 			}
 			m.inputs[m.focusedInput].Blur()

@@ -1,11 +1,14 @@
 package bubbletea
 
 import (
+	"fmt"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -15,10 +18,14 @@ var _ tea.Model = &getOrdersModel{}
 type getOrdersModel struct {
 	useCase abstractions.IPVZOrderUseCase
 
-	userIDInput textinput.Model
-	table       table.Model
+	settingsForm       *FormModel
+	settingsFormActive bool
+
+	table table.Model
 
 	userID string
+	lastN  int
+	pvzID  string
 
 	data    []domain.PVZOrder
 	changed bool
@@ -50,14 +57,87 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 	input.Prompt = "User ID: "
 	input.Focus()
 
-	return &getOrdersModel{
-		useCase:       useCase,
-		pageSize:      pageSize,
-		table:         dataTable,
-		userIDInput:   input,
-		data:          make([]domain.PVZOrder, 0),
+	model := &getOrdersModel{
+		useCase: useCase,
+
+		settingsFormActive: true,
+		table:              dataTable,
+
+		data: make([]domain.PVZOrder, 0),
+
 		cursorHistory: make([]time.Time, 0),
+		pageSize:      pageSize,
 	}
+
+	model.settingsForm = initFormModel(model)
+
+	return model
+}
+
+func initFormModel(o *getOrdersModel) *FormModel {
+	const (
+		userIDInput = iota
+		lastNInput
+		pvzIDInput
+	)
+
+	inputs := make([]textinput.Model, 3)
+
+	inputs[userIDInput] = textinput.New()
+	inputs[userIDInput].Focus()
+	inputs[userIDInput].Prompt = "User ID: "
+	inputs[userIDInput].Placeholder = "Enter user ID"
+
+	inputs[lastNInput] = textinput.New()
+	inputs[lastNInput].Prompt = "Last N: "
+	inputs[lastNInput].Placeholder = "Enter last N"
+
+	inputs[pvzIDInput] = textinput.New()
+	inputs[pvzIDInput].Prompt = "PVZ ID: "
+	inputs[pvzIDInput].Placeholder = "Enter PVZ ID"
+
+	submit := func(values []string) error {
+		userIDValue := values[userIDInput]
+		lastNValue := values[lastNInput]
+		pvzIDValue := values[pvzIDInput]
+
+		var err error
+
+		var input struct {
+			userID string
+			lastN  int
+			pvzID  string
+		}
+		{
+			if userIDValue == "" {
+				return fmt.Errorf("userID is empty")
+			}
+
+			if lastNValue != "" {
+				input.lastN, err = strconv.Atoi(lastNValue)
+				if err != nil {
+					return fmt.Errorf("lastN is invalid")
+				}
+			}
+
+			if input.lastN < 0 {
+				return fmt.Errorf("lastN is negative")
+			}
+
+			input.userID = userIDValue
+		}
+
+		o.userID = input.userID
+		o.lastN = input.lastN
+		o.pvzID = pvzIDValue
+
+		o.changed = true
+		o.settingsFormActive = false
+
+		return nil
+	}
+
+	return NewFormModel(inputs, submit)
 }
 
 // Init initializes the model
@@ -65,8 +145,7 @@ func (m *getOrdersModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update updates the model
-func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	paginateDown := func() {
 		if len(m.data) > 1 {
 			m.cursorHistory = append(m.cursorHistory, m.cursorCreatedAt)
@@ -89,22 +168,11 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			if !m.userIDInput.Focused() {
-				m.userIDInput.Focus()
-			} else {
-				m.userIDInput.SetValue("")
-				return m, tea.Quit
-			}
+			m.settingsFormActive = true
 		case tea.KeyDown:
 			paginateDown()
 		case tea.KeyUp:
 			paginateUp()
-		case tea.KeyEnter:
-			if m.userIDInput.Focused() {
-				m.userID = m.userIDInput.Value()
-				m.changed = true
-				m.userIDInput.Blur()
-			}
 		default:
 			switch msg.String() {
 			case "j":
@@ -124,46 +192,72 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 	}
 
-	if m.userIDInput.Focused() {
-		var cmd tea.Cmd
-		m.userIDInput, cmd = m.userIDInput.Update(msg)
-		return m, cmd
-	}
-
 	return m, nil
 }
 
-// View returns the view of the model
-func (m *getOrdersModel) View() string {
+// Update updates the model
+func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if !m.settingsFormActive {
+		return m.innerUpdate(msg)
+	}
+
+	_, cmd := m.settingsForm.Update(msg)
+	if cmd != nil {
+		if reflect.ValueOf(cmd).Pointer() == reflect.ValueOf(tea.Quit).Pointer() && !m.settingsFormActive {
+			m.settingsFormActive = false
+			cmd = nil
+		}
+	}
+
+	return m, cmd
+}
+
+func (m *getOrdersModel) updateData() error {
+	orders, err := m.useCase.GetOrders(
+		m.userID,
+		abstractions.WithCursorCreatedAt(m.cursorCreatedAt),
+		abstractions.WithLimit(m.pageSize),
+		abstractions.WithLastNOrders(m.lastN),
+		abstractions.WithPVZID(m.pvzID),
+	)
+	if err != nil {
+		return err
+	}
+	rows := make([]table.Row, len(orders))
+	for i, order := range orders {
+		rows[i] = table.Row{
+			order.OrderID,
+			order.PVZID,
+			order.RecipientID,
+			order.ReceivedAt.Format("2006-01-02 15:04:05"),
+			order.StorageTime.String(),
+			order.IssuedAt.Format("2006-01-02 15:04:05"),
+			order.ReturnedAt.Format("2006-01-02 15:04:05"),
+		}
+	}
+	m.table.SetRows(rows)
+	m.data = orders
+
+	return nil
+}
+
+func (m *getOrdersModel) innerView() string {
 	if m.changed {
-		orders, err := m.useCase.GetOrders(
-			m.userID,
-			abstractions.WithCursorCreatedAt(m.cursorCreatedAt),
-			abstractions.WithLimit(m.pageSize),
-		)
+		err := m.updateData()
 		if err != nil {
 			return err.Error()
 		}
-		rows := make([]table.Row, len(orders))
-		for i, order := range orders {
-			rows[i] = table.Row{
-				order.OrderID,
-				order.PVZID,
-				order.RecipientID,
-				order.ReceivedAt.Format("2006-01-02 15:04:05"),
-				order.StorageTime.String(),
-				order.IssuedAt.Format("2006-01-02 15:04:05"),
-				order.ReturnedAt.Format("2006-01-02 15:04:05"),
-			}
-		}
-		m.table.SetRows(rows)
-		m.data = orders
 		m.changed = false
 	}
 
-	if m.userIDInput.Focused() {
-		return m.userIDInput.View()
+	return m.table.View() + "\n\n" + m.table.HelpView()
+}
+
+// View returns the view
+func (m *getOrdersModel) View() string {
+	if m.settingsFormActive {
+		return m.settingsForm.View()
 	}
 
-	return m.table.View() + "\n\n" + m.table.HelpView()
+	return m.innerView()
 }
