@@ -73,6 +73,9 @@ func (P PVZOrderUseCase) ReturnOrderDelivery(orderID string) error {
 
 // GiveOrderToClient gives order to client
 func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
+	orders := make([]domain.PVZOrder, 0, len(orderIDs))
+	userID := ""
+
 	for _, orderID := range orderIDs {
 		order, err := P.repo.GetOrder(orderID)
 		if err != nil {
@@ -80,21 +83,35 @@ func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 		}
 
 		if order.PVZID != P.currentPVZID {
-			return fmt.Errorf("%w: order does not belong to this PVZ", domain.ErrInvalidArgument)
+			return fmt.Errorf("%w: order %s does not belong to this PVZ", domain.ErrInvalidArgument, order.OrderID)
 		}
 
 		if !order.IssuedAt.IsZero() {
-			return fmt.Errorf("%w: order is already issued", domain.ErrInvalidArgument)
+			return fmt.Errorf("%w: order %s is already issued", domain.ErrInvalidArgument, order.OrderID)
 		}
 
 		if order.ReceivedAt.Add(order.StorageTime).Before(time.Now()) {
-			return fmt.Errorf("%w: orders storage time has expired", domain.ErrInvalidArgument)
+			return fmt.Errorf("%w: orders storage time for order %s has expired", domain.ErrInvalidArgument, order.OrderID)
 		}
 
-		if err := P.repo.SetOrderIssued(orderID); err != nil {
+		if userID == "" {
+			userID = order.RecipientID
+		}
+
+		if order.RecipientID != userID {
+			return fmt.Errorf("%w: orders do not belong to the same user", domain.ErrInvalidArgument)
+		}
+
+		orders = append(orders, order)
+	}
+
+	for _, order := range orders {
+		err := P.repo.SetOrderIssued(order.OrderID)
+		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
