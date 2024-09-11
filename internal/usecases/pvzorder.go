@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"slices"
 	"time"
 )
 
@@ -117,6 +118,13 @@ func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 
 // GetOrders gets orders
 func (P PVZOrderUseCase) GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
+	if slices.ContainsFunc(options, func(optFunc abstractions.GetOrdersOptFunc) bool {
+		opts := &abstractions.GetOrdersOptions{}
+		_ = optFunc(opts)
+		return opts.SamePVZ
+	}) {
+		options = append(options, abstractions.WithPVZID(P.currentPVZID))
+	}
 	return P.repo.GetOrders(userID, options...)
 
 }

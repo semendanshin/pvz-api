@@ -23,9 +23,9 @@ type getOrdersModel struct {
 
 	table table.Model
 
-	userID string
-	lastN  int
-	pvzID  string
+	userID  string
+	lastN   int
+	samePVZ bool
 
 	data    []domain.PVZOrder
 	changed bool
@@ -78,7 +78,7 @@ func initFormModel(o *getOrdersModel) *FormModel {
 	const (
 		userIDInput = iota
 		lastNInput
-		pvzIDInput
+		samePVZInput
 	)
 
 	inputs := make([]textinput.Model, 3)
@@ -92,21 +92,21 @@ func initFormModel(o *getOrdersModel) *FormModel {
 	inputs[lastNInput].Prompt = "Last N: "
 	inputs[lastNInput].Placeholder = "Enter last N"
 
-	inputs[pvzIDInput] = textinput.New()
-	inputs[pvzIDInput].Prompt = "PVZ ID: "
-	inputs[pvzIDInput].Placeholder = "Enter PVZ ID"
+	inputs[samePVZInput] = textinput.New()
+	inputs[samePVZInput].Prompt = "Same PVZ(y/n): "
+	inputs[samePVZInput].Placeholder = "Enter y/n or leave empty"
 
 	submit := func(values []string) error {
 		userIDValue := values[userIDInput]
 		lastNValue := values[lastNInput]
-		pvzIDValue := values[pvzIDInput]
+		samePVZValue := values[samePVZInput]
 
 		var err error
 
 		var input struct {
-			userID string
-			lastN  int
-			pvzID  string
+			userID  string
+			lastN   int
+			samePVZ bool
 		}
 		{
 			if userIDValue == "" {
@@ -124,12 +124,22 @@ func initFormModel(o *getOrdersModel) *FormModel {
 				return fmt.Errorf("lastN is negative")
 			}
 
+			if samePVZValue != "y" && samePVZValue != "n" && samePVZValue != "" {
+				return fmt.Errorf("samePVZ is invalid")
+			}
+
+			if samePVZValue == "y" {
+				input.samePVZ = true
+			} else {
+				input.samePVZ = false
+			}
+
 			input.userID = userIDValue
 		}
 
 		o.userID = input.userID
 		o.lastN = input.lastN
-		o.pvzID = pvzIDValue
+		o.samePVZ = input.samePVZ
 
 		o.changed = true
 		o.settingsFormActive = false
@@ -213,12 +223,17 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *getOrdersModel) updateData() error {
-	orders, err := m.useCase.GetOrders(
-		m.userID,
+	opts := []abstractions.GetOrdersOptFunc{
 		abstractions.WithCursorCreatedAt(m.cursorCreatedAt),
 		abstractions.WithLimit(m.pageSize),
 		abstractions.WithLastNOrders(m.lastN),
-		abstractions.WithPVZID(m.pvzID),
+	}
+	if m.samePVZ {
+		opts = append(opts, abstractions.WithSamePVZ())
+	}
+	orders, err := m.useCase.GetOrders(
+		m.userID,
+		opts...,
 	)
 	if err != nil {
 		return err

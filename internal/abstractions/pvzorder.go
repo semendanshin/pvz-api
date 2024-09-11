@@ -49,6 +49,7 @@ func NewPaginationOptions(options ...PagePaginationOptFunc) (*PagePaginationOpti
 type GetOrdersOptions struct {
 	LastNOrders     int
 	PVZID           string
+	SamePVZ         bool
 	CursorCreatedAt time.Time
 	Limit           int
 }
@@ -68,6 +69,14 @@ func WithLastNOrders(lastNOrders int) GetOrdersOptFunc {
 func WithPVZID(pvzID string) GetOrdersOptFunc {
 	return func(o *GetOrdersOptions) error {
 		o.PVZID = pvzID
+		return nil
+	}
+}
+
+// WithSamePVZ is an option to get orders for the same PVZ
+func WithSamePVZ() GetOrdersOptFunc {
+	return func(o *GetOrdersOptions) error {
+		o.SamePVZ = true
 		return nil
 	}
 }
