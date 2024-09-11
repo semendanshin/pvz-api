@@ -51,6 +51,10 @@ func newAcceptOrderModel(useCase abstractions.IPVZOrderUseCase) *FormModel {
 			return fmt.Errorf("storageTime is invalid")
 		}
 
+		if storageTime < 0 {
+			return fmt.Errorf("storageTime is negative")
+		}
+
 		return useCase.AcceptOrderDelivery(orderIDValue, recipientIDValue, storageTime)
 	}
 
