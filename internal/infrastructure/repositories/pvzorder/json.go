@@ -34,12 +34,21 @@ type fileStruct struct {
 	Orders []pvzOrder `json:"orders"`
 }
 
-func readFile(pathToFile string) (fileStruct, error) {
+func ensureExists(pathToFile string) error {
 	if _, err := os.Stat(pathToFile); os.IsNotExist(err) {
 		err = writeFile(pathToFile, fileStruct{Orders: make([]pvzOrder, 0)})
 		if err != nil {
-			return fileStruct{}, err
+			return err
 		}
+	}
+
+	return nil
+}
+
+func readFile(pathToFile string) (fileStruct, error) {
+	err := ensureExists(pathToFile)
+	if err != nil {
+		return fileStruct{}, err
 	}
 
 	file, err := os.Open(pathToFile)
@@ -198,6 +207,18 @@ func (J *JSONRepository) SetOrderReturned(orderID string) error {
 	return err
 }
 
+func getOrders(fileStruct fileStruct, userID string, options abstractions.GetOrdersOptions) []domain.PVZOrder {
+	orders := make([]domain.PVZOrder, 0)
+	for _, order := range fileStruct.Orders {
+		if order.RecipientID != userID || (options.PVZID != "" && order.PVZID != options.PVZID) || !order.IssuedAt.IsZero() {
+			continue
+		}
+		orders = append(orders, convertToDomain(order))
+	}
+
+	return orders
+}
+
 // GetOrders gets orders
 func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
@@ -210,15 +231,7 @@ func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrd
 		return nil, err
 	}
 
-	orders := make([]domain.PVZOrder, 0)
-	for _, order := range fileStruct.Orders {
-		if order.RecipientID == userID && (getOrdersOptions.PVZID == "" || order.PVZID == getOrdersOptions.PVZID) {
-			if !order.DeletedAt.IsZero() {
-				continue
-			}
-			orders = append(orders, convertToDomain(order))
-		}
-	}
+	orders := getOrders(fileStruct, userID, *getOrdersOptions)
 
 	slices.SortFunc(orders, func(i, j domain.PVZOrder) int {
 		return int(j.ReceivedAt.Sub(i.ReceivedAt))
@@ -260,6 +273,17 @@ func (J *JSONRepository) GetOrder(orderID string) (domain.PVZOrder, error) {
 	return domain.PVZOrder{}, domain.ErrNotFound
 }
 
+func getReturns(fileStruct fileStruct) []domain.PVZOrder {
+	returns := make([]domain.PVZOrder, 0)
+	for _, order := range fileStruct.Orders {
+		if !order.ReturnedAt.IsZero() || !order.DeletedAt.IsZero() {
+			returns = append(returns, convertToDomain(order))
+		}
+	}
+
+	return returns
+}
+
 // GetReturns gets returns
 func (J *JSONRepository) GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
@@ -272,23 +296,10 @@ func (J *JSONRepository) GetReturns(options ...abstractions.PagePaginationOptFun
 		return nil, err
 	}
 
-	returns := make([]domain.PVZOrder, 0)
-	skipped := 0
-	for _, order := range fileStruct.Orders {
-		if !order.ReturnedAt.IsZero() {
-			if !order.DeletedAt.IsZero() {
-				continue
-			}
-			if skipped < paginationOptions.Page*paginationOptions.PageSize {
-				skipped++
-				continue
-			}
-			returns = append(returns, convertToDomain(order))
-			if len(returns) == paginationOptions.PageSize {
-				break
-			}
-		}
-	}
+	returns := getReturns(fileStruct)
+
+	returns = returns[paginationOptions.Page*paginationOptions.PageSize:]
+	returns = returns[:paginationOptions.PageSize]
 
 	return returns, nil
 }

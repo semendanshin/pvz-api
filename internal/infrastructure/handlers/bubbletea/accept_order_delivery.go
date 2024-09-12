@@ -9,114 +9,201 @@ import (
 	"time"
 )
 
-func newAcceptOrderModel(useCase abstractions.IPVZOrderUseCase) *FormModel {
-	const (
-		orderIDInput = iota
-		recipientIDInput
-		storageTimeInput
-		weightInput
-		costInput
-		packagingInput
-		additionalFilmInput
-	)
+const (
+	acceptOrderModelOrderIDInput = iota
+	acceptOrderModelRecipientIDInput
+	acceptOrderModelStorageTimeInput
+	acceptOrderModelWeightInput
+	acceptOrderModelCostInput
+	acceptOrderModelPackagingInput
+	acceptOrderModelAdditionalFilmInput
+)
 
+func initInputs() []textinput.Model {
 	inputs := make([]textinput.Model, 7)
 
-	inputs[orderIDInput] = textinput.New()
-	inputs[orderIDInput].Focus()
-	inputs[orderIDInput].Prompt = "Order ID: "
-	inputs[orderIDInput].Placeholder = "Enter order ID"
+	inputs[acceptOrderModelOrderIDInput] = textinput.New()
+	inputs[acceptOrderModelOrderIDInput].Focus()
+	inputs[acceptOrderModelOrderIDInput].Prompt = "Order ID: "
+	inputs[acceptOrderModelOrderIDInput].Placeholder = "Enter order ID"
 
-	inputs[recipientIDInput] = textinput.New()
-	inputs[recipientIDInput].Prompt = "Recipient ID: "
-	inputs[recipientIDInput].Placeholder = "Enter recipient ID"
+	inputs[acceptOrderModelRecipientIDInput] = textinput.New()
+	inputs[acceptOrderModelRecipientIDInput].Prompt = "Recipient ID: "
+	inputs[acceptOrderModelRecipientIDInput].Placeholder = "Enter recipient ID"
 
-	inputs[storageTimeInput] = textinput.New()
-	inputs[storageTimeInput].Prompt = "Storage time: "
-	inputs[storageTimeInput].Placeholder = "Enter storage time"
+	inputs[acceptOrderModelStorageTimeInput] = textinput.New()
+	inputs[acceptOrderModelStorageTimeInput].Prompt = "Storage time: "
+	inputs[acceptOrderModelStorageTimeInput].Placeholder = "Enter storage time"
 
-	inputs[weightInput] = textinput.New()
-	inputs[weightInput].Prompt = "Weight: "
-	inputs[weightInput].Placeholder = "Enter weight"
+	inputs[acceptOrderModelWeightInput] = textinput.New()
+	inputs[acceptOrderModelWeightInput].Prompt = "Weight: "
+	inputs[acceptOrderModelWeightInput].Placeholder = "Enter weight"
 
-	inputs[costInput] = textinput.New()
-	inputs[costInput].Prompt = "Cost: "
-	inputs[costInput].Placeholder = "Enter cost"
+	inputs[acceptOrderModelCostInput] = textinput.New()
+	inputs[acceptOrderModelCostInput].Prompt = "Cost: "
+	inputs[acceptOrderModelCostInput].Placeholder = "Enter cost"
 
-	inputs[packagingInput] = textinput.New()
-	inputs[packagingInput].Prompt = "Packaging: "
-	inputs[packagingInput].Placeholder = "Enter packaging"
+	inputs[acceptOrderModelPackagingInput] = textinput.New()
+	inputs[acceptOrderModelPackagingInput].Prompt = "Packaging: "
+	inputs[acceptOrderModelPackagingInput].Placeholder = "Enter packaging"
 
-	inputs[additionalFilmInput] = textinput.New()
-	inputs[additionalFilmInput].Prompt = "Additional film (y/n): "
-	inputs[additionalFilmInput].Placeholder = "Enter additional film"
+	inputs[acceptOrderModelAdditionalFilmInput] = textinput.New()
+	inputs[acceptOrderModelAdditionalFilmInput].Prompt = "Additional film (y/n): "
+	inputs[acceptOrderModelAdditionalFilmInput].Placeholder = "Enter additional film"
 
-	submit := func(values []string) error {
-		orderIDValue := values[orderIDInput]
-		recipientIDValue := values[recipientIDInput]
-		storageTimeValue := values[storageTimeInput]
+	return inputs
+}
 
-		if orderIDValue == "" {
-			return fmt.Errorf("orderID is empty")
+type inputValues struct {
+	OrderID        string
+	RecipientID    string
+	StorageTime    string
+	Weight         string
+	Cost           string
+	Packaging      string
+	AdditionalFilm string
+}
+
+type validatedInputValues struct {
+	OrderID        string
+	RecipientID    string
+	StorageTime    time.Duration
+	Weight         int
+	Cost           int
+	Packaging      domain.PackagingType
+	AdditionalFilm bool
+}
+
+func validateOrderID(orderID string) (string, error) {
+	if orderID == "" {
+		return "", fmt.Errorf("orderID is empty")
+	}
+
+	return orderID, nil
+}
+
+func validateRecipientID(recipientID string) (string, error) {
+	if recipientID == "" {
+		return "", fmt.Errorf("recipientID is empty")
+	}
+
+	return recipientID, nil
+}
+
+func validateStorageTime(storageTime string) (time.Duration, error) {
+	if storageTime == "" {
+		return 0, fmt.Errorf("storageTime is empty")
+	}
+
+	return time.ParseDuration(storageTime)
+}
+
+func validateWeight(weight string) (int, error) {
+	if weight == "" {
+		return 0, fmt.Errorf("weight is empty")
+	}
+
+	return strconv.Atoi(weight)
+}
+
+func validateCost(cost string) (int, error) {
+	if cost == "" {
+		return 0, fmt.Errorf("cost is empty")
+	}
+
+	return strconv.Atoi(cost)
+}
+
+func validatePackaging(packaging string) (domain.PackagingType, error) {
+	if packaging == "" {
+		return domain.PackagingTypeUnknown, fmt.Errorf("packaging is empty")
+	}
+
+	return domain.NewPackagingType(packaging)
+}
+
+func validateAdditionalFilm(additionalFilm string) (bool, error) {
+	if additionalFilm == "" {
+		return false, fmt.Errorf("additionalFilm is empty")
+	}
+
+	if additionalFilm != "y" && additionalFilm != "n" {
+		return false, fmt.Errorf("additionalFilm is invalid")
+	}
+
+	return additionalFilm == "y", nil
+}
+
+func validateInputValues(input inputValues) (validatedInputValues, error) {
+	var err error
+	var validated validatedInputValues
+
+	validated.OrderID, err = validateOrderID(input.OrderID)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.RecipientID, err = validateRecipientID(input.RecipientID)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.StorageTime, err = validateStorageTime(input.StorageTime)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.Weight, err = validateWeight(input.Weight)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.Cost, err = validateCost(input.Cost)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.Packaging, err = validatePackaging(input.Packaging)
+	if err != nil {
+		return validated, err
+	}
+
+	validated.AdditionalFilm, err = validateAdditionalFilm(input.AdditionalFilm)
+	if err != nil {
+		return validated, err
+	}
+
+	return validated, nil
+}
+
+func acceptOrderModelSubmit(useCase abstractions.IPVZOrderUseCase) func(values []string) error {
+	return func(values []string) error {
+		input := inputValues{
+			OrderID:        values[acceptOrderModelOrderIDInput],
+			RecipientID:    values[acceptOrderModelRecipientIDInput],
+			StorageTime:    values[acceptOrderModelStorageTimeInput],
+			Weight:         values[acceptOrderModelWeightInput],
+			Cost:           values[acceptOrderModelCostInput],
+			Packaging:      values[acceptOrderModelPackagingInput],
+			AdditionalFilm: values[acceptOrderModelAdditionalFilmInput],
 		}
 
-		if recipientIDValue == "" {
-			return fmt.Errorf("recipientID is empty")
-		}
-
-		if storageTimeValue == "" {
-			return fmt.Errorf("storageTime is empty")
-		}
-
-		storageTime, err := time.ParseDuration(storageTimeValue)
-		if err != nil {
-			return fmt.Errorf("storageTime is invalid")
-		}
-
-		if storageTime < 0 {
-			return fmt.Errorf("storageTime is negative")
-		}
-
-		costValue := values[costInput]
-		if costValue == "" {
-			return fmt.Errorf("cost is empty")
-		}
-
-		cost, err := strconv.Atoi(costValue)
-
-		weightValue := values[weightInput]
-		if weightValue == "" {
-			return fmt.Errorf("weight is empty")
-		}
-
-		weight, err := strconv.Atoi(weightValue)
-
-		packagingValue := values[packagingInput]
-		if packagingValue == "" {
-			return fmt.Errorf("packaging is empty")
-		}
-
-		packaging, err := domain.NewPackagingType(packagingValue)
+		validated, err := validateInputValues(input)
 		if err != nil {
 			return err
 		}
 
-		additionalFilmValue := values[additionalFilmInput]
-		if additionalFilmValue == "" {
-			return fmt.Errorf("additionalFilm is empty")
-		}
-
-		if additionalFilmValue != "y" && additionalFilmValue != "n" {
-			return fmt.Errorf("additionalFilm is invalid")
-		}
-
-		additionalFilm := additionalFilmValue == "y"
-
 		return useCase.AcceptOrderDelivery(
-			orderIDValue, recipientIDValue, storageTime,
-			cost, weight, packaging, additionalFilm,
+			validated.OrderID, validated.RecipientID, validated.StorageTime,
+			validated.Cost, validated.Weight, validated.Packaging, validated.AdditionalFilm,
 		)
 	}
+}
+
+func newAcceptOrderModel(useCase abstractions.IPVZOrderUseCase) *FormModel {
+	inputs := initInputs()
+
+	submit := acceptOrderModelSubmit(useCase)
 
 	return NewFormModel(inputs, submit)
 }

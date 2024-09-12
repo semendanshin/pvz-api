@@ -32,12 +32,36 @@ func NewPVZOrderUseCase(repo abstractions.PVZOrderRepository, packager abstracti
 	}
 }
 
-// AcceptOrderDelivery accepts order delivery
-func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
+func (P PVZOrderUseCase) checkOrderID(orderID string) error {
 	_, err := P.repo.GetOrder(orderID)
 	if err == nil {
 		return fmt.Errorf("%w: order already exists", domain.ErrAlreadyExists)
-	} else if !errors.Is(err, domain.ErrNotFound) {
+	}
+	if !errors.Is(err, domain.ErrNotFound) {
+		return err
+	}
+	return nil
+}
+
+func (P PVZOrderUseCase) packageOrder(order domain.PVZOrder, packaging domain.PackagingType, additionalFilm bool) (domain.PVZOrder, error) {
+	order, err := P.packager.PackageOrder(order, packaging)
+	if err != nil {
+		return domain.PVZOrder{}, err
+	}
+
+	if additionalFilm {
+		order, err = P.packager.PackageOrder(order, domain.PackagingTypeFilm)
+		if err != nil {
+			return domain.PVZOrder{}, err
+		}
+	}
+
+	return order, nil
+}
+
+// AcceptOrderDelivery accepts order delivery
+func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
+	if err := P.checkOrderID(orderID); err != nil {
 		return err
 	}
 
@@ -45,28 +69,20 @@ func (P PVZOrderUseCase) AcceptOrderDelivery(orderID, recipientID string, storag
 		return fmt.Errorf("%w: additional film is not allowed for film packaging", domain.ErrInvalidArgument)
 	}
 
-	order := domain.PVZOrder{
-		OrderID:        orderID,
-		PVZID:          P.currentPVZID,
-		RecipientID:    recipientID,
-		ReceivedAt:     time.Now(),
-		StorageTime:    storageTime,
-		Cost:           cost,
-		Weight:         weight,
-		Packaging:      packaging,
-		AdditionalFilm: additionalFilm,
-	}
+	order := domain.NewPVZOrder(
+		orderID,
+		P.currentPVZID,
+		recipientID,
+		cost,
+		weight,
+		storageTime,
+		packaging,
+		additionalFilm,
+	)
 
-	order, err = P.packager.PackageOrder(order, packaging, additionalFilm)
+	order, err := P.packageOrder(order, packaging, additionalFilm)
 	if err != nil {
 		return err
-	}
-
-	if additionalFilm {
-		order, err = P.packager.PackageOrder(order, domain.PackagingTypeFilm, false)
-		if err != nil {
-			return err
-		}
 	}
 
 	return P.repo.CreateOrder(order)
@@ -94,6 +110,22 @@ func (P PVZOrderUseCase) ReturnOrderDelivery(orderID string) error {
 	return P.repo.DeleteOrder(orderID)
 }
 
+func validateGiveOrderToClient(order domain.PVZOrder, currentPVZID string) error {
+	if order.PVZID != currentPVZID {
+		return fmt.Errorf("%w: order does not belong to this PVZ", domain.ErrInvalidArgument)
+	}
+
+	if !order.IssuedAt.IsZero() {
+		return fmt.Errorf("%w: order is already issued", domain.ErrInvalidArgument)
+	}
+
+	if order.ReceivedAt.Add(order.StorageTime).Before(time.Now()) {
+		return fmt.Errorf("%w: orders storage time has expired", domain.ErrInvalidArgument)
+	}
+
+	return nil
+}
+
 // GiveOrderToClient gives order to client
 func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 	orders := make([]domain.PVZOrder, 0, len(orderIDs))
@@ -105,16 +137,8 @@ func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 			return err
 		}
 
-		if order.PVZID != P.currentPVZID {
-			return fmt.Errorf("%w: order %s does not belong to this PVZ", domain.ErrInvalidArgument, order.OrderID)
-		}
-
-		if !order.IssuedAt.IsZero() {
-			return fmt.Errorf("%w: order %s is already issued", domain.ErrInvalidArgument, order.OrderID)
-		}
-
-		if order.ReceivedAt.Add(order.StorageTime).Before(time.Now()) {
-			return fmt.Errorf("%w: orders storage time for order %s has expired", domain.ErrInvalidArgument, order.OrderID)
+		if err := validateGiveOrderToClient(order, P.currentPVZID); err != nil {
+			return err
 		}
 
 		if userID == "" {
@@ -148,22 +172,11 @@ func (P PVZOrderUseCase) GetOrders(userID string, options ...abstractions.GetOrd
 		options = append(options, abstractions.WithPVZID(P.currentPVZID))
 	}
 	return P.repo.GetOrders(userID, options...)
-
 }
 
-// AcceptReturn accepts return
-func (P PVZOrderUseCase) AcceptReturn(userID, orderID string) error {
-	order, err := P.repo.GetOrder(orderID)
-	if err != nil {
-		return err
-	}
-
+func validateAcceptReturn(userID string, order domain.PVZOrder) error {
 	if order.RecipientID != userID {
 		return fmt.Errorf("%w: user is not recipient", domain.ErrInvalidArgument)
-	}
-
-	if order.PVZID != P.currentPVZID {
-		return fmt.Errorf("%w: order does not belong to this PVZ", domain.ErrInvalidArgument)
 	}
 
 	if !order.ReturnedAt.IsZero() {
@@ -176,6 +189,20 @@ func (P PVZOrderUseCase) AcceptReturn(userID, orderID string) error {
 
 	if order.IssuedAt.Add(TimeForReturn).Before(time.Now()) {
 		return fmt.Errorf("%w: time for return has expired", domain.ErrInvalidArgument)
+	}
+
+	return nil
+}
+
+// AcceptReturn accepts return
+func (P PVZOrderUseCase) AcceptReturn(userID, orderID string) error {
+	order, err := P.repo.GetOrder(orderID)
+	if err != nil {
+		return err
+	}
+
+	if err := validateAcceptReturn(userID, order); err != nil {
+		return err
 	}
 
 	return P.repo.SetOrderReturned(orderID)

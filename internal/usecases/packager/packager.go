@@ -22,15 +22,11 @@ func NewOrderPackager(strategies map[domain.PackagingType]abstractions.OrderPack
 
 // PackageOrder packages an order
 func (o OrderPackager) PackageOrder(
-	order domain.PVZOrder, packaging domain.PackagingType, additionalFilm bool,
+	order domain.PVZOrder, packaging domain.PackagingType,
 ) (domain.PVZOrder, error) {
 	strategy, ok := o.strategies[packaging]
 	if !ok {
 		return domain.PVZOrder{}, fmt.Errorf("unknown packaging type: %s", domain.ErrInvalidArgument)
-	}
-
-	if packaging == domain.PackagingTypeFilm && additionalFilm {
-		return domain.PVZOrder{}, fmt.Errorf("%w: additional film is not allowed for film packaging", domain.ErrInvalidArgument)
 	}
 
 	order, err := strategy.PackageOrder(order)

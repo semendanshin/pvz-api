@@ -50,40 +50,53 @@ func (m *getReturnsModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *getReturnsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-		case tea.KeyDown:
-			m.page++
-			m.changed = true
-		case tea.KeyUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
-		default:
+func (m *getReturnsModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
+	switch msg.Type {
+	case tea.KeyCtrlC, tea.KeyEsc:
+		return tea.Quit
+	case tea.KeyDown:
+		m.page++
+		m.changed = true
+	case tea.KeyUp:
+		m.page--
+		if m.page < 0 {
+			m.page = 0
 		}
-	case tea.MouseMsg:
-		switch tea.MouseEvent(msg).Button {
-		case tea.MouseButtonWheelDown:
-			m.page++
-			m.changed = true
-		case tea.MouseButtonWheelUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
-		default:
-		}
+		m.changed = true
 	default:
 	}
 
-	return m, nil
+	return nil
+}
+
+func (m *getReturnsModel) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	switch tea.MouseEvent(msg).Button {
+	case tea.MouseButtonWheelDown:
+		m.page++
+		m.changed = true
+	case tea.MouseButtonWheelUp:
+		m.page--
+		if m.page < 0 {
+			m.page = 0
+		}
+		m.changed = true
+	default:
+	}
+
+	return nil
+}
+
+func (m *getReturnsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cmds := make([]tea.Cmd, 0)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		cmds = append(cmds, m.handleKeyboard(msg))
+	case tea.MouseMsg:
+		cmds = append(cmds, m.handleMouse(msg))
+	default:
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m *getReturnsModel) View() string {

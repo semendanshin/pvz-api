@@ -261,8 +261,7 @@ func (m *getOrdersModel) updateData() error {
 
 func (m *getOrdersModel) innerView() string {
 	if m.changed {
-		err := m.updateData()
-		if err != nil {
+		if err := m.updateData(); err != nil {
 			return err.Error()
 		}
 		m.changed = false

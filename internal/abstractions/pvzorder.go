@@ -129,7 +129,7 @@ type IPVZOrderUseCase interface {
 }
 
 type OrderPackagerInterface interface {
-	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType, additionalFilm bool) (domain.PVZOrder, error)
+	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
 }
 
 type OrderPackagerStrategy interface {

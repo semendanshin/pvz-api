@@ -51,3 +51,17 @@ type PVZOrder struct {
 	IssuedAt   time.Time
 	ReturnedAt time.Time
 }
+
+func NewPVZOrder(orderID, pvzID, recipientID string, cost, weight int, storageTime time.Duration, packaging PackagingType, additionalFilm bool) PVZOrder {
+	return PVZOrder{
+		OrderID:        orderID,
+		PVZID:          pvzID,
+		RecipientID:    recipientID,
+		Cost:           cost,
+		Weight:         weight,
+		Packaging:      packaging,
+		AdditionalFilm: additionalFilm,
+		ReceivedAt:     time.Now(),
+		StorageTime:    storageTime,
+	}
+}

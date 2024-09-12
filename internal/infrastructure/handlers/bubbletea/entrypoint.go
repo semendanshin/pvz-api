@@ -32,31 +32,43 @@ func (m *EntryPointModel) Init() tea.Cmd {
 	return nil
 }
 
+func (m *EntryPointModel) cursorForward() {
+	m.cursor++
+	if m.cursor >= len(m.choices) {
+		m.cursor = 0
+	}
+}
+
+func (m *EntryPointModel) cursorBackward() {
+	m.cursor--
+	if m.cursor < 0 {
+		m.cursor = len(m.choices) - 1
+	}
+}
+
+func (m *EntryPointModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
+	switch msg.Type {
+	case tea.KeyDown:
+		m.cursorForward()
+	case tea.KeyUp:
+		m.cursorBackward()
+	case tea.KeyEnter:
+		m.subProgramActive = true
+	case tea.KeyCtrlC, tea.KeyEsc:
+		if !m.subProgramActive {
+			return tea.Quit
+		}
+		m.subProgramActive = false
+	default:
+	}
+
+	return nil
+}
+
 func (m *EntryPointModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyDown:
-			m.cursor++
-			if m.cursor >= len(m.choices) {
-				m.cursor = 0
-			}
-		case tea.KeyUp:
-			m.cursor--
-			if m.cursor < 0 {
-				m.cursor = len(m.choices) - 1
-			}
-		case tea.KeyEnter:
-			m.subProgramActive = true
-		case tea.KeyCtrlC, tea.KeyEsc:
-			if m.subProgramActive {
-				m.subProgramActive = false
-			} else {
-				return m, tea.Quit
-			}
-		default:
-			return m, nil
-		}
+		return m, m.handleKeyboard(msg)
 	}
 
 	return m, nil
