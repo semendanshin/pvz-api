@@ -47,11 +47,11 @@ func NewPaginationOptions(options ...PagePaginationOptFunc) (*PagePaginationOpti
 
 // GetOrdersOptions is a struct for get orders options
 type GetOrdersOptions struct {
-	LastNOrders     int
-	PVZID           string
-	SamePVZ         bool
-	CursorCreatedAt time.Time
-	Limit           int
+	LastNOrders int
+	PVZID       string
+	SamePVZ     bool
+	CursorID    string
+	Limit       int
 }
 
 // GetOrdersOptFunc is a type for order options
@@ -81,10 +81,9 @@ func WithSamePVZ() GetOrdersOptFunc {
 	}
 }
 
-// WithCursorCreatedAt is an option to get orders by cursor created at
-func WithCursorCreatedAt(cursorCreatedAt time.Time) GetOrdersOptFunc {
+func WithCursorID(cursorID string) GetOrdersOptFunc {
 	return func(o *GetOrdersOptions) error {
-		o.CursorCreatedAt = cursorCreatedAt
+		o.CursorID = cursorID
 		return nil
 	}
 }

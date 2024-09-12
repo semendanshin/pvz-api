@@ -215,9 +215,9 @@ func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrd
 		orders = orders[:getOrdersOptions.LastNOrders]
 	}
 
-	if !getOrdersOptions.CursorCreatedAt.IsZero() {
+	if getOrdersOptions.CursorID != "" {
 		for i, order := range orders {
-			if order.ReceivedAt.Before(getOrdersOptions.CursorCreatedAt) || order.ReceivedAt.Equal(getOrdersOptions.CursorCreatedAt) {
+			if order.OrderID == getOrdersOptions.CursorID {
 				orders = orders[i:]
 				break
 			}

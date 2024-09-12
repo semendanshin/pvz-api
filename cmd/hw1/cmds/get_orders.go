@@ -28,6 +28,14 @@ var getOrdersCmd = &cobra.Command{
 			opts = append(opts, abstractions.WithPVZID(cmd.Flag("pvz").Value.String()))
 		}
 
+		if cursorID, _ := cmd.Flags().GetString("cursorID"); cursorID != "" {
+			opts = append(opts, abstractions.WithCursorID(cursorID))
+		}
+
+		if limit, _ := cmd.Flags().GetInt("limit"); limit > 0 {
+			opts = append(opts, abstractions.WithLimit(limit))
+		}
+
 		data, err := pvzOrderUseCase.GetOrders(userID, opts...)
 		if err != nil {
 			return err
@@ -45,4 +53,6 @@ var getOrdersCmd = &cobra.Command{
 func init() {
 	getOrdersCmd.Flags().Int("lastN", 0, "last N")
 	getOrdersCmd.Flags().Bool("samePVZ", false, "same PVZ")
+	getOrdersCmd.Flags().String("cursorID", "", "cursor ID")
+	getOrdersCmd.Flags().Int("limit", 10, "limit")
 }

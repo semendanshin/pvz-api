@@ -9,7 +9,6 @@ import (
 	"homework/internal/domain"
 	"reflect"
 	"strconv"
-	"time"
 )
 
 var _ tea.Model = &getOrdersModel{}
@@ -30,9 +29,9 @@ type getOrdersModel struct {
 	data    []domain.PVZOrder
 	changed bool
 
-	cursorCreatedAt time.Time
-	cursorHistory   []time.Time
-	pageSize        int
+	cursor        string
+	cursorHistory []string
+	pageSize      int
 }
 
 // newGetOrdersModel creates a new getOrdersModel
@@ -65,7 +64,7 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 
 		data: make([]domain.PVZOrder, 0),
 
-		cursorHistory: make([]time.Time, 0),
+		cursorHistory: make([]string, 0),
 		pageSize:      pageSize,
 	}
 
@@ -158,8 +157,8 @@ func (m *getOrdersModel) Init() tea.Cmd {
 func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	paginateDown := func() {
 		if len(m.data) > 1 {
-			m.cursorHistory = append(m.cursorHistory, m.cursorCreatedAt)
-			m.cursorCreatedAt = m.data[1].ReceivedAt
+			m.cursorHistory = append(m.cursorHistory, m.cursor)
+			m.cursor = m.data[1].OrderID
 			m.changed = true
 		}
 	}
@@ -167,7 +166,7 @@ func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	paginateUp := func() {
 		if len(m.data) != 0 {
 			if len(m.cursorHistory) != 0 {
-				m.cursorCreatedAt = m.cursorHistory[len(m.cursorHistory)-1]
+				m.cursor = m.cursorHistory[len(m.cursorHistory)-1]
 				m.cursorHistory = m.cursorHistory[:len(m.cursorHistory)-1]
 				m.changed = true
 			}
@@ -224,7 +223,7 @@ func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *getOrdersModel) updateData() error {
 	opts := []abstractions.GetOrdersOptFunc{
-		abstractions.WithCursorCreatedAt(m.cursorCreatedAt),
+		abstractions.WithCursorID(m.cursor),
 		abstractions.WithLimit(m.pageSize),
 		abstractions.WithLastNOrders(m.lastN),
 	}
