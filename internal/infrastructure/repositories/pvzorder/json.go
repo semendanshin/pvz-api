@@ -207,10 +207,14 @@ func (J *JSONRepository) SetOrderReturned(orderID string) error {
 	return err
 }
 
+func filter(order pvzOrder, userID string, options abstractions.GetOrdersOptions) bool {
+	return order.RecipientID == userID && (options.PVZID == "" || order.PVZID == options.PVZID) && order.IssuedAt.IsZero()
+}
+
 func getOrders(fileStruct fileStruct, userID string, options abstractions.GetOrdersOptions) []domain.PVZOrder {
 	orders := make([]domain.PVZOrder, 0)
 	for _, order := range fileStruct.Orders {
-		if order.RecipientID != userID || (options.PVZID != "" && order.PVZID != options.PVZID) || !order.IssuedAt.IsZero() {
+		if !filter(order, userID, options) {
 			continue
 		}
 		orders = append(orders, convertToDomain(order))
@@ -232,29 +236,45 @@ func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrd
 	}
 
 	orders := getOrders(fileStruct, userID, *getOrdersOptions)
+	sortOrdersByReceivedAt(orders)
 
+	orders = applyLastNOrdersFilter(orders, getOrdersOptions.LastNOrders)
+	orders = applyCursorIDFilter(orders, getOrdersOptions.CursorID)
+	orders = applyLimitFilter(orders, getOrdersOptions.Limit)
+
+	return orders, nil
+}
+
+func sortOrdersByReceivedAt(orders []domain.PVZOrder) {
 	slices.SortFunc(orders, func(i, j domain.PVZOrder) int {
 		return int(j.ReceivedAt.Sub(i.ReceivedAt))
 	})
+}
 
-	if getOrdersOptions.LastNOrders != 0 && len(orders) > getOrdersOptions.LastNOrders {
-		orders = orders[:getOrdersOptions.LastNOrders]
+func applyLastNOrdersFilter(orders []domain.PVZOrder, lastNOrders int) []domain.PVZOrder {
+	if lastNOrders != 0 && len(orders) > lastNOrders {
+		return orders[:lastNOrders]
 	}
+	return orders
+}
 
-	if getOrdersOptions.CursorID != "" {
-		for i, order := range orders {
-			if order.OrderID == getOrdersOptions.CursorID {
-				orders = orders[i:]
-				break
-			}
+func applyCursorIDFilter(orders []domain.PVZOrder, cursorID string) []domain.PVZOrder {
+	if cursorID == "" {
+		return orders
+	}
+	for i, order := range orders {
+		if order.OrderID == cursorID {
+			return orders[i:]
 		}
 	}
+	return orders
+}
 
-	if getOrdersOptions.Limit != 0 && len(orders) > getOrdersOptions.Limit {
-		orders = orders[:getOrdersOptions.Limit]
+func applyLimitFilter(orders []domain.PVZOrder, limit int) []domain.PVZOrder {
+	if limit != 0 && len(orders) > limit {
+		return orders[:limit]
 	}
-
-	return orders, nil
+	return orders
 }
 
 // GetOrder gets an order

@@ -67,14 +67,19 @@ func (m *FormModel) reset() {
 	m.err = nil
 }
 
+func (m *FormModel) handleEnter() tea.Cmd {
+	if m.focusedInput == len(m.inputs)-1 {
+		m.submitForm()
+		return tea.Quit
+	}
+	m.nextInput()
+	return nil
+}
+
 func (m *FormModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
 	switch msg.Type {
 	case tea.KeyEnter:
-		if m.focusedInput == len(m.inputs)-1 {
-			m.submitForm()
-			return tea.Quit
-		}
-		m.nextInput()
+		return m.handleEnter()
 	case tea.KeyTab, tea.KeyDown:
 		m.nextInput()
 	case tea.KeyShiftTab, tea.KeyUp:

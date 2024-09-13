@@ -110,6 +110,49 @@ func (P PVZOrderUseCase) ReturnOrderDelivery(orderID string) error {
 	return P.repo.DeleteOrder(orderID)
 }
 
+// GiveOrderToClient gives order to client
+func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
+	if len(orderIDs) == 0 {
+		return fmt.Errorf("%w: orderIDs is empty", domain.ErrInvalidArgument)
+	}
+
+	orders := make([]domain.PVZOrder, 0, len(orderIDs))
+
+	var err error
+	for i, orderID := range orderIDs {
+		orders[i], err = P.repo.GetOrder(orderID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return P.setOrdersIssued(orders)
+}
+
+func (P PVZOrderUseCase) processOrders(orders []domain.PVZOrder) error {
+	userID := orders[0].RecipientID
+
+	if err := validateGiveOrdersToClient(orders, P.currentPVZID, userID); err != nil {
+		return err
+	}
+
+	return P.setOrdersIssued(orders)
+}
+
+func validateGiveOrdersToClient(orders []domain.PVZOrder, currentPVZID string, userID string) error {
+	for _, order := range orders {
+		if err := validateGiveOrderToClient(order, currentPVZID); err != nil {
+			return err
+		}
+
+		if order.RecipientID != userID {
+			return fmt.Errorf("%w: orders do not belong to the same user", domain.ErrInvalidArgument)
+		}
+	}
+
+	return nil
+}
+
 func validateGiveOrderToClient(order domain.PVZOrder, currentPVZID string) error {
 	if order.PVZID != currentPVZID {
 		return fmt.Errorf("%w: order does not belong to this PVZ", domain.ErrInvalidArgument)
@@ -126,39 +169,13 @@ func validateGiveOrderToClient(order domain.PVZOrder, currentPVZID string) error
 	return nil
 }
 
-// GiveOrderToClient gives order to client
-func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
-	orders := make([]domain.PVZOrder, 0, len(orderIDs))
-	userID := ""
-
-	for _, orderID := range orderIDs {
-		order, err := P.repo.GetOrder(orderID)
-		if err != nil {
-			return err
-		}
-
-		if err := validateGiveOrderToClient(order, P.currentPVZID); err != nil {
-			return err
-		}
-
-		if userID == "" {
-			userID = order.RecipientID
-		}
-
-		if order.RecipientID != userID {
-			return fmt.Errorf("%w: orders do not belong to the same user", domain.ErrInvalidArgument)
-		}
-
-		orders = append(orders, order)
-	}
-
+func (P PVZOrderUseCase) setOrdersIssued(orders []domain.PVZOrder) error {
 	for _, order := range orders {
 		err := P.repo.SetOrderIssued(order.OrderID)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 

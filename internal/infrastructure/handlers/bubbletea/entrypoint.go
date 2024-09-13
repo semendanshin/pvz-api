@@ -46,6 +46,14 @@ func (m *EntryPointModel) cursorBackward() {
 	}
 }
 
+func (m *EntryPointModel) quit() tea.Cmd {
+	if !m.subProgramActive {
+		return tea.Quit
+	}
+	m.subProgramActive = false
+	return nil
+}
+
 func (m *EntryPointModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
 	switch msg.Type {
 	case tea.KeyDown:
@@ -55,10 +63,7 @@ func (m *EntryPointModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
 	case tea.KeyEnter:
 		m.subProgramActive = true
 	case tea.KeyCtrlC, tea.KeyEsc:
-		if !m.subProgramActive {
-			return tea.Quit
-		}
-		m.subProgramActive = false
+		return m.quit()
 	default:
 	}
 

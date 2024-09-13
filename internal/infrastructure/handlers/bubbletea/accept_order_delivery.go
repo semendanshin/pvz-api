@@ -135,42 +135,36 @@ func validateAdditionalFilm(additionalFilm string) (bool, error) {
 }
 
 func validateInputValues(input inputValues) (validatedInputValues, error) {
+	errs := make([]error, 0, 7)
+
 	var err error
 	var validated validatedInputValues
 
 	validated.OrderID, err = validateOrderID(input.OrderID)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.RecipientID, err = validateRecipientID(input.RecipientID)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.StorageTime, err = validateStorageTime(input.StorageTime)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.Weight, err = validateWeight(input.Weight)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.Cost, err = validateCost(input.Cost)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.Packaging, err = validatePackaging(input.Packaging)
-	if err != nil {
-		return validated, err
-	}
+	errs = append(errs, err)
 
 	validated.AdditionalFilm, err = validateAdditionalFilm(input.AdditionalFilm)
-	if err != nil {
-		return validated, err
+	errs = append(errs, err)
+
+	for _, err := range errs {
+		if err != nil {
+			return validated, err
+		}
 	}
 
 	return validated, nil
