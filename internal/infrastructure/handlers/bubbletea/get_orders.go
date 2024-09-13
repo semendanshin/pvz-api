@@ -251,6 +251,10 @@ func (m *getOrdersModel) updateData() error {
 			order.StorageTime.String(),
 			order.IssuedAt.Format("2006-01-02 15:04:05"),
 			order.ReturnedAt.Format("2006-01-02 15:04:05"),
+			strconv.Itoa(order.Weight),
+			strconv.Itoa(order.Cost),
+			order.Packaging.String(),
+			strconv.FormatBool(order.AdditionalFilm),
 		}
 	}
 	m.table.SetRows(rows)
