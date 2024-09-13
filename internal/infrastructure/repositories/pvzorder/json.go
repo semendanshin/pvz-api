@@ -318,8 +318,20 @@ func (J *JSONRepository) GetReturns(options ...abstractions.PagePaginationOptFun
 
 	returns := getReturns(fileStruct)
 
-	returns = returns[paginationOptions.Page*paginationOptions.PageSize:]
-	returns = returns[:paginationOptions.PageSize]
+	returns = applyPagination(returns, *paginationOptions)
 
 	return returns, nil
+}
+
+func applyPagination(orders []domain.PVZOrder, options abstractions.PagePaginationOptions) []domain.PVZOrder {
+	if options.Page*options.PageSize >= len(orders) {
+		return []domain.PVZOrder{}
+	}
+
+	orders = orders[options.Page*options.PageSize:]
+
+	if len(orders) > options.PageSize {
+		orders = orders[:options.PageSize]
+	}
+	return orders
 }

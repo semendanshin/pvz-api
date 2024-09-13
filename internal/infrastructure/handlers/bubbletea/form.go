@@ -48,16 +48,16 @@ func (m *FormModel) prevInput() {
 	m.inputs[m.focusedInput].Focus()
 }
 
-func (m *FormModel) submitForm() {
+func (m *FormModel) submitForm() error {
 	values := make([]string, len(m.inputs))
 	for i, input := range m.inputs {
 		values[i] = input.Value()
 	}
 	if err := m.submit(values); err != nil {
-		m.err = err
-		return
+		return err
 	}
 	m.reset()
+	return nil
 }
 
 func (m *FormModel) reset() {
@@ -67,19 +67,22 @@ func (m *FormModel) reset() {
 	m.err = nil
 }
 
-func (m *FormModel) handleEnter() tea.Cmd {
+func (m *FormModel) handleEnter() (tea.Cmd, error) {
 	if m.focusedInput == len(m.inputs)-1 {
-		m.submitForm()
-		return tea.Quit
+		return tea.Quit, m.submitForm()
 	}
 	m.nextInput()
-	return nil
+	return nil, nil
 }
 
 func (m *FormModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
 	switch msg.Type {
 	case tea.KeyEnter:
-		return m.handleEnter()
+		cmd, err := m.handleEnter()
+		if err != nil {
+			m.err = err
+		}
+		return cmd
 	case tea.KeyTab, tea.KeyDown:
 		m.nextInput()
 	case tea.KeyShiftTab, tea.KeyUp:

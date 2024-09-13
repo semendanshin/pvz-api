@@ -116,7 +116,7 @@ func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 		return fmt.Errorf("%w: orderIDs is empty", domain.ErrInvalidArgument)
 	}
 
-	orders := make([]domain.PVZOrder, 0, len(orderIDs))
+	orders := make([]domain.PVZOrder, len(orderIDs))
 
 	var err error
 	for i, orderID := range orderIDs {
