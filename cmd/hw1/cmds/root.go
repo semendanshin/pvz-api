@@ -11,9 +11,14 @@ var rootCmd = &cobra.Command{
 	Use:   "hw1",
 	Short: "Homework 1",
 	Run: func(cmd *cobra.Command, args []string) {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
+		orders, _ := cmd.Flags().GetString("orders")
+		pvz, _ := cmd.Flags().GetString("pvz")
 
-		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
+		print("orders: ", orders, " pvz: ", pvz)
+
+		pvzOrderRepository := pvzorder.NewJSONRepository(orders)
+
+		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, pvz)
 
 		handler := bubbletea.NewHandler(pvzOrderUseCase)
 

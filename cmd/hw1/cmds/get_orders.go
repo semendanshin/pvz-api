@@ -22,23 +22,18 @@ var getOrdersCmd = &cobra.Command{
 		opts := make([]abstractions.GetOrdersOptFunc, 0)
 		if lastN, _ := cmd.Flags().GetInt("lastN"); lastN > 0 {
 			opts = append(opts, abstractions.WithLastNOrders(lastN))
-		} else {
-			page, _ := cmd.Flags().GetInt("page")
-			pageSize, _ := cmd.Flags().GetInt("pageSize")
-
-			paginationOpts, err := abstractions.NewPaginationOptions(
-				abstractions.WithPage(page),
-				abstractions.WithPageSize(pageSize),
-			)
-			if err != nil {
-				return err
-			}
-
-			opts = append(opts, abstractions.WithPaginationOptions(paginationOpts))
 		}
 
 		if samePVZ, _ := cmd.Flags().GetBool("samePVZ"); samePVZ {
 			opts = append(opts, abstractions.WithPVZID(cmd.Flag("pvz").Value.String()))
+		}
+
+		if cursorID, _ := cmd.Flags().GetString("cursorID"); cursorID != "" {
+			opts = append(opts, abstractions.WithCursorID(cursorID))
+		}
+
+		if limit, _ := cmd.Flags().GetInt("limit"); limit > 0 {
+			opts = append(opts, abstractions.WithLimit(limit))
 		}
 
 		data, err := pvzOrderUseCase.GetOrders(userID, opts...)
@@ -56,8 +51,8 @@ var getOrdersCmd = &cobra.Command{
 }
 
 func init() {
-	getOrdersCmd.Flags().Int("page", 0, "page")
-	getOrdersCmd.Flags().Int("pageSize", 10, "page size")
 	getOrdersCmd.Flags().Int("lastN", 0, "last N")
 	getOrdersCmd.Flags().Bool("samePVZ", false, "same PVZ")
+	getOrdersCmd.Flags().String("cursorID", "", "cursor ID")
+	getOrdersCmd.Flags().Int("limit", 10, "limit")
 }

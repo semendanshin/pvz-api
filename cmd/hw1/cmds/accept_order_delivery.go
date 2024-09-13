@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"homework/internal/infrastructure/repositories/pvzorder"
 	"homework/internal/usecases"
@@ -22,6 +23,10 @@ var acceptDeliveryCmd = &cobra.Command{
 		storageTime, err := time.ParseDuration(args[2])
 		if err != nil {
 			return err
+		}
+
+		if storageTime < 0 {
+			return fmt.Errorf("storageTime is negative")
 		}
 
 		err = pvzOrderUseCase.AcceptOrderDelivery(orderID, recipientID, storageTime)

@@ -49,7 +49,13 @@ func (m *FormModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				for i := range m.inputs {
 					m.inputs[i].SetValue("")
+					m.inputs[i].Blur()
 				}
+				m.focusedInput = 0
+				if len(m.inputs) > 0 {
+					m.inputs[0].Focus()
+				}
+				m.err = nil
 				return m, tea.Quit
 			}
 			m.inputs[m.focusedInput].Blur()

@@ -6,34 +6,34 @@ import (
 	"time"
 )
 
-// PaginationOptions is a struct for pagination options
-type PaginationOptions struct {
+// PagePaginationOptions is a struct for pagination options
+type PagePaginationOptions struct {
 	Page     int
 	PageSize int
 }
 
-// PaginationOptFunc is a type for pagination options
-type PaginationOptFunc func(*PaginationOptions) error
+// PagePaginationOptFunc is a type for pagination options
+type PagePaginationOptFunc func(*PagePaginationOptions) error
 
 // WithPage is an option to get orders by page
-func WithPage(page int) PaginationOptFunc {
-	return func(o *PaginationOptions) error {
+func WithPage(page int) PagePaginationOptFunc {
+	return func(o *PagePaginationOptions) error {
 		o.Page = page
 		return nil
 	}
 }
 
 // WithPageSize is an option to get orders by page size
-func WithPageSize(pageSize int) PaginationOptFunc {
-	return func(o *PaginationOptions) error {
+func WithPageSize(pageSize int) PagePaginationOptFunc {
+	return func(o *PagePaginationOptions) error {
 		o.PageSize = pageSize
 		return nil
 	}
 }
 
 // NewPaginationOptions creates new pagination options
-func NewPaginationOptions(options ...PaginationOptFunc) (*PaginationOptions, error) {
-	opts := &PaginationOptions{
+func NewPaginationOptions(options ...PagePaginationOptFunc) (*PagePaginationOptions, error) {
+	opts := &PagePaginationOptions{
 		Page:     0,
 		PageSize: 10,
 	}
@@ -49,7 +49,9 @@ func NewPaginationOptions(options ...PaginationOptFunc) (*PaginationOptions, err
 type GetOrdersOptions struct {
 	LastNOrders int
 	PVZID       string
-	*PaginationOptions
+	SamePVZ     bool
+	CursorID    string
+	Limit       int
 }
 
 // GetOrdersOptFunc is a type for order options
@@ -71,22 +73,32 @@ func WithPVZID(pvzID string) GetOrdersOptFunc {
 	}
 }
 
-// WithPaginationOptions is an option to get orders with pagination options
-func WithPaginationOptions(opts *PaginationOptions) GetOrdersOptFunc {
+// WithSamePVZ is an option to get orders for the same PVZ
+func WithSamePVZ() GetOrdersOptFunc {
 	return func(o *GetOrdersOptions) error {
-		o.PaginationOptions = opts
+		o.SamePVZ = true
+		return nil
+	}
+}
+
+func WithCursorID(cursorID string) GetOrdersOptFunc {
+	return func(o *GetOrdersOptions) error {
+		o.CursorID = cursorID
+		return nil
+	}
+}
+
+// WithLimit is an option to get orders by limit
+func WithLimit(limit int) GetOrdersOptFunc {
+	return func(o *GetOrdersOptions) error {
+		o.Limit = limit
 		return nil
 	}
 }
 
 // NewGetOrdersOptions creates new get orders options
 func NewGetOrdersOptions(options ...GetOrdersOptFunc) (*GetOrdersOptions, error) {
-	opts := GetOrdersOptions{
-		PaginationOptions: &PaginationOptions{
-			Page:     0,
-			PageSize: 10,
-		},
-	}
+	opts := GetOrdersOptions{}
 	for _, opt := range options {
 		if err := opt(&opts); err != nil {
 			return nil, err
@@ -103,7 +115,7 @@ type PVZOrderRepository interface {
 	SetOrderReturned(orderID string) error
 	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
 	GetOrder(orderID string) (domain.PVZOrder, error)
-	GetReturns(options ...PaginationOptFunc) ([]domain.PVZOrder, error)
+	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
 }
 
 // IPVZOrderUseCase is an interface for order use cases
@@ -113,5 +125,5 @@ type IPVZOrderUseCase interface {
 	GiveOrderToClient(orderIDs []string) error
 	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
 	AcceptReturn(userID, orderID string) error
-	GetReturns(options ...PaginationOptFunc) ([]domain.PVZOrder, error)
+	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
 }

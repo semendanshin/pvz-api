@@ -1,10 +1,13 @@
 package bubbletea
 
 import (
+	"fmt"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"homework/internal/abstractions"
+	"homework/internal/domain"
+	"reflect"
 	"strconv"
 )
 
@@ -14,14 +17,21 @@ var _ tea.Model = &getOrdersModel{}
 type getOrdersModel struct {
 	useCase abstractions.IPVZOrderUseCase
 
-	userIDInput textinput.Model
-	table       table.Model
+	settingsForm       *FormModel
+	settingsFormActive bool
 
-	userID string
+	table table.Model
 
-	changed  bool
-	page     int
-	pageSize int
+	userID  string
+	lastN   int
+	samePVZ bool
+
+	data    []domain.PVZOrder
+	changed bool
+
+	cursor        string
+	cursorHistory []string
+	pageSize      int
 }
 
 // newGetOrdersModel creates a new getOrdersModel
@@ -46,12 +56,97 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 	input.Prompt = "User ID: "
 	input.Focus()
 
-	return &getOrdersModel{
-		useCase:     useCase,
-		pageSize:    pageSize,
-		table:       dataTable,
-		userIDInput: input,
+	model := &getOrdersModel{
+		useCase: useCase,
+
+		settingsFormActive: true,
+		table:              dataTable,
+
+		data: make([]domain.PVZOrder, 0),
+
+		cursorHistory: make([]string, 0),
+		pageSize:      pageSize,
 	}
+
+	model.settingsForm = initFormModel(model)
+
+	return model
+}
+
+func initFormModel(o *getOrdersModel) *FormModel {
+	const (
+		userIDInput = iota
+		lastNInput
+		samePVZInput
+	)
+
+	inputs := make([]textinput.Model, 3)
+
+	inputs[userIDInput] = textinput.New()
+	inputs[userIDInput].Focus()
+	inputs[userIDInput].Prompt = "User ID: "
+	inputs[userIDInput].Placeholder = "Enter user ID"
+
+	inputs[lastNInput] = textinput.New()
+	inputs[lastNInput].Prompt = "Last N: "
+	inputs[lastNInput].Placeholder = "Enter last N"
+
+	inputs[samePVZInput] = textinput.New()
+	inputs[samePVZInput].Prompt = "Same PVZ(y/n): "
+	inputs[samePVZInput].Placeholder = "Enter y/n or leave empty"
+
+	submit := func(values []string) error {
+		userIDValue := values[userIDInput]
+		lastNValue := values[lastNInput]
+		samePVZValue := values[samePVZInput]
+
+		var err error
+
+		var input struct {
+			userID  string
+			lastN   int
+			samePVZ bool
+		}
+		{
+			if userIDValue == "" {
+				return fmt.Errorf("userID is empty")
+			}
+
+			if lastNValue != "" {
+				input.lastN, err = strconv.Atoi(lastNValue)
+				if err != nil {
+					return fmt.Errorf("lastN is invalid")
+				}
+			}
+
+			if input.lastN < 0 {
+				return fmt.Errorf("lastN is negative")
+			}
+
+			if samePVZValue != "y" && samePVZValue != "n" && samePVZValue != "" {
+				return fmt.Errorf("samePVZ is invalid")
+			}
+
+			if samePVZValue == "y" {
+				input.samePVZ = true
+			} else {
+				input.samePVZ = false
+			}
+
+			input.userID = userIDValue
+		}
+
+		o.userID = input.userID
+		o.lastN = input.lastN
+		o.samePVZ = input.samePVZ
+
+		o.changed = true
+		o.settingsFormActive = false
+
+		return nil
+	}
+
+	return NewFormModel(inputs, submit)
 }
 
 // Init initializes the model
@@ -59,96 +154,124 @@ func (m *getOrdersModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update updates the model
-func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
+	paginateDown := func() {
+		if len(m.data) > 1 {
+			m.cursorHistory = append(m.cursorHistory, m.cursor)
+			m.cursor = m.data[1].OrderID
+			m.changed = true
+		}
+	}
+
+	paginateUp := func() {
+		if len(m.data) != 0 {
+			if len(m.cursorHistory) != 0 {
+				m.cursor = m.cursorHistory[len(m.cursorHistory)-1]
+				m.cursorHistory = m.cursorHistory[:len(m.cursorHistory)-1]
+				m.changed = true
+			}
+		}
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			if !m.userIDInput.Focused() {
-				m.userIDInput.Focus()
-			} else {
-				m.userIDInput.SetValue("")
-				return m, tea.Quit
-			}
+			m.settingsFormActive = true
 		case tea.KeyDown:
-			m.page++
-			m.changed = true
+			paginateDown()
 		case tea.KeyUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
-		case tea.KeyEnter:
-			if m.userIDInput.Focused() {
-				m.userID = m.userIDInput.Value()
-				m.changed = true
-				m.userIDInput.Blur()
-			}
+			paginateUp()
 		default:
+			switch msg.String() {
+			case "j":
+				paginateDown()
+			case "k":
+				paginateUp()
+			}
 		}
 	case tea.MouseMsg:
 		switch tea.MouseEvent(msg).Button {
 		case tea.MouseButtonWheelDown:
-			m.page++
-			m.changed = true
+			paginateDown()
 		case tea.MouseButtonWheelUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
+			paginateUp()
 		default:
 		}
 	default:
 	}
 
-	if m.userIDInput.Focused() {
-		var cmd tea.Cmd
-		m.userIDInput, cmd = m.userIDInput.Update(msg)
-		return m, cmd
-	}
-
 	return m, nil
 }
 
-// View returns the view of the model
-func (m *getOrdersModel) View() string {
+// Update updates the model
+func (m *getOrdersModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if !m.settingsFormActive {
+		return m.innerUpdate(msg)
+	}
+
+	_, cmd := m.settingsForm.Update(msg)
+	if cmd != nil {
+		if reflect.ValueOf(cmd).Pointer() == reflect.ValueOf(tea.Quit).Pointer() && !m.settingsFormActive {
+			m.settingsFormActive = false
+			cmd = nil
+		}
+	}
+
+	return m, cmd
+}
+
+func (m *getOrdersModel) updateData() error {
+	opts := []abstractions.GetOrdersOptFunc{
+		abstractions.WithCursorID(m.cursor),
+		abstractions.WithLimit(m.pageSize),
+		abstractions.WithLastNOrders(m.lastN),
+	}
+	if m.samePVZ {
+		opts = append(opts, abstractions.WithSamePVZ())
+	}
+	orders, err := m.useCase.GetOrders(
+		m.userID,
+		opts...,
+	)
+	if err != nil {
+		return err
+	}
+	rows := make([]table.Row, len(orders))
+	for i, order := range orders {
+		rows[i] = table.Row{
+			order.OrderID,
+			order.PVZID,
+			order.RecipientID,
+			order.ReceivedAt.Format("2006-01-02 15:04:05"),
+			order.StorageTime.String(),
+			order.IssuedAt.Format("2006-01-02 15:04:05"),
+			order.ReturnedAt.Format("2006-01-02 15:04:05"),
+		}
+	}
+	m.table.SetRows(rows)
+	m.data = orders
+
+	return nil
+}
+
+func (m *getOrdersModel) innerView() string {
 	if m.changed {
-		paginationOpts, err := abstractions.NewPaginationOptions(
-			abstractions.WithPage(m.page),
-			abstractions.WithPageSize(m.pageSize),
-		)
+		err := m.updateData()
 		if err != nil {
 			return err.Error()
 		}
-		orders, err := m.useCase.GetOrders(
-			m.userID,
-			abstractions.WithPaginationOptions(paginationOpts),
-		)
-		if err != nil {
-			return err.Error()
-		}
-		rows := make([]table.Row, len(orders))
-		for i, order := range orders {
-			rows[i] = table.Row{
-				order.OrderID,
-				order.PVZID,
-				order.RecipientID,
-				order.ReceivedAt.Format("2006-01-02 15:04:05"),
-				order.StorageTime.String(),
-				order.IssuedAt.Format("2006-01-02 15:04:05"),
-				order.ReturnedAt.Format("2006-01-02 15:04:05"),
-			}
-		}
-		m.table.SetRows(rows)
 		m.changed = false
 	}
 
-	if m.userIDInput.Focused() {
-		return m.userIDInput.View()
+	return m.table.View() + "\n\n" + m.table.HelpView()
+}
+
+// View returns the view
+func (m *getOrdersModel) View() string {
+	if m.settingsFormActive {
+		return m.settingsForm.View()
 	}
 
-	return m.table.View() + "\n" + "Page: " + strconv.Itoa(m.page+1) + "\n" + m.table.HelpView()
+	return m.innerView()
 }

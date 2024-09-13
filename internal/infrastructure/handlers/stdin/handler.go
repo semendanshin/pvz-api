@@ -108,6 +108,14 @@ func (h *Handler) Run() error {
 				continue
 			}
 
+			if storageTime < 0 {
+				_, err := fmt.Println("Storage time is negative")
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
 			command = AcceptOrderCommand
 			input = AcceptOrderCommandInput{
 				OrderID:     args[0],

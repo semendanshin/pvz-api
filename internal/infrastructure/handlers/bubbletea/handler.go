@@ -59,6 +59,7 @@ func (h *Handler) Run() error {
 
 	p := tea.NewProgram(
 		NewEntryPointModel(models),
+		tea.WithMouseCellMotion(),
 	)
 	if _, err := p.Run(); err != nil {
 		return err
