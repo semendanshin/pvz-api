@@ -120,10 +120,18 @@ type PVZOrderRepository interface {
 
 // IPVZOrderUseCase is an interface for order use cases
 type IPVZOrderUseCase interface {
-	AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration) error
+	AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error
 	ReturnOrderDelivery(orderID string) error
 	GiveOrderToClient(orderIDs []string) error
 	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
 	AcceptReturn(userID, orderID string) error
 	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
+}
+
+type OrderPackagerInterface interface {
+	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
+}
+
+type OrderPackagerStrategy interface {
+	PackageOrder(order domain.PVZOrder) (domain.PVZOrder, error)
 }

@@ -44,6 +44,10 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 		{Title: "StorageTime", Width: 15},
 		{Title: "IssuedAt", Width: 20},
 		{Title: "ReturnedAt", Width: 20},
+		{Title: "Weight", Width: 10},
+		{Title: "Cost", Width: 10},
+		{Title: "Packaging", Width: 10},
+		{Title: "AdditionalFilm", Width: 15},
 	}
 	dataTable := table.New(
 		table.WithColumns(columns),
@@ -73,67 +77,105 @@ func newGetOrdersModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *get
 	return model
 }
 
-func initFormModel(o *getOrdersModel) *FormModel {
-	const (
-		userIDInput = iota
-		lastNInput
-		samePVZInput
-	)
+const (
+	getOrdersFormUserIDInput = iota
+	getOrdersFormLastNInput
+	getOrdersFormSamePVZInput
+)
 
+func initGetOrdersFormSamePVZInputInputs() []textinput.Model {
 	inputs := make([]textinput.Model, 3)
 
-	inputs[userIDInput] = textinput.New()
-	inputs[userIDInput].Focus()
-	inputs[userIDInput].Prompt = "User ID: "
-	inputs[userIDInput].Placeholder = "Enter user ID"
+	inputs[getOrdersFormUserIDInput] = textinput.New()
+	inputs[getOrdersFormUserIDInput].Focus()
+	inputs[getOrdersFormUserIDInput].Prompt = "User ID: "
+	inputs[getOrdersFormUserIDInput].Placeholder = "Enter user ID"
 
-	inputs[lastNInput] = textinput.New()
-	inputs[lastNInput].Prompt = "Last N: "
-	inputs[lastNInput].Placeholder = "Enter last N"
+	inputs[getOrdersFormLastNInput] = textinput.New()
+	inputs[getOrdersFormLastNInput].Prompt = "Last N: "
+	inputs[getOrdersFormLastNInput].Placeholder = "Enter last N"
 
-	inputs[samePVZInput] = textinput.New()
-	inputs[samePVZInput].Prompt = "Same PVZ(y/n): "
-	inputs[samePVZInput].Placeholder = "Enter y/n or leave empty"
+	inputs[getOrdersFormSamePVZInput] = textinput.New()
+	inputs[getOrdersFormSamePVZInput].Prompt = "Same PVZ(y/n): "
+	inputs[getOrdersFormSamePVZInput].Placeholder = "Enter y/n or leave empty"
 
-	submit := func(values []string) error {
-		userIDValue := values[userIDInput]
-		lastNValue := values[lastNInput]
-		samePVZValue := values[samePVZInput]
+	return inputs
+}
 
-		var err error
+type validatedInput struct {
+	userID  string
+	lastN   int
+	samePVZ bool
+}
 
-		var input struct {
-			userID  string
-			lastN   int
-			samePVZ bool
-		}
-		{
-			if userIDValue == "" {
-				return fmt.Errorf("userID is empty")
-			}
+func processUserIDInput(value string) (string, error) {
+	if value == "" {
+		return "", fmt.Errorf("userID is empty")
+	}
 
-			if lastNValue != "" {
-				input.lastN, err = strconv.Atoi(lastNValue)
-				if err != nil {
-					return fmt.Errorf("lastN is invalid")
-				}
-			}
+	return value, nil
+}
 
-			if input.lastN < 0 {
-				return fmt.Errorf("lastN is negative")
-			}
+func processLastNInput(value string) (int, error) {
+	if value == "" {
+		return 0, nil
+	}
 
-			if samePVZValue != "y" && samePVZValue != "n" && samePVZValue != "" {
-				return fmt.Errorf("samePVZ is invalid")
-			}
+	lastN, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("lastN is invalid")
+	}
 
-			if samePVZValue == "y" {
-				input.samePVZ = true
-			} else {
-				input.samePVZ = false
-			}
+	if lastN < 0 {
+		return 0, fmt.Errorf("lastN is negative")
+	}
 
-			input.userID = userIDValue
+	return lastN, nil
+}
+
+func processSamePVZInput(value string) (bool, error) {
+	if value == "y" {
+		return true, nil
+	}
+
+	if value == "n" || value == "" {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("samePVZ is invalid")
+}
+
+func processInput(values []string) (validatedInput, error) {
+	userIDValue := values[getOrdersFormUserIDInput]
+	lastNValue := values[getOrdersFormLastNInput]
+	samePVZValue := values[getOrdersFormSamePVZInput]
+
+	var err error
+	var input validatedInput
+
+	input.userID, err = processUserIDInput(userIDValue)
+	if err != nil {
+		return validatedInput{}, err
+	}
+
+	input.lastN, err = processLastNInput(lastNValue)
+	if err != nil {
+		return validatedInput{}, err
+	}
+
+	input.samePVZ, err = processSamePVZInput(samePVZValue)
+	if err != nil {
+		return validatedInput{}, err
+	}
+
+	return input, nil
+}
+
+func getOrdersFormSubmitFunc(o *getOrdersModel) func(values []string) error {
+	return func(values []string) error {
+		input, err := processInput(values)
+		if err != nil {
+			return err
 		}
 
 		o.userID = input.userID
@@ -145,6 +187,13 @@ func initFormModel(o *getOrdersModel) *FormModel {
 
 		return nil
 	}
+}
+
+func initFormModel(o *getOrdersModel) *FormModel {
+
+	inputs := initGetOrdersFormSamePVZInputInputs()
+
+	submit := getOrdersFormSubmitFunc(o)
 
 	return NewFormModel(inputs, submit)
 }
@@ -154,54 +203,73 @@ func (m *getOrdersModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	paginateDown := func() {
-		if len(m.data) > 1 {
-			m.cursorHistory = append(m.cursorHistory, m.cursor)
-			m.cursor = m.data[1].OrderID
+func (m *getOrdersModel) paginateDown() {
+	if len(m.data) > 1 {
+		m.cursorHistory = append(m.cursorHistory, m.cursor)
+		m.cursor = m.data[1].OrderID
+		m.changed = true
+	}
+}
+
+func (m *getOrdersModel) paginateUp() {
+	if len(m.data) != 0 {
+		if len(m.cursorHistory) != 0 {
+			m.cursor = m.cursorHistory[len(m.cursorHistory)-1]
+			m.cursorHistory = m.cursorHistory[:len(m.cursorHistory)-1]
 			m.changed = true
 		}
 	}
+}
 
-	paginateUp := func() {
-		if len(m.data) != 0 {
-			if len(m.cursorHistory) != 0 {
-				m.cursor = m.cursorHistory[len(m.cursorHistory)-1]
-				m.cursorHistory = m.cursorHistory[:len(m.cursorHistory)-1]
-				m.changed = true
-			}
-		}
+func (m *getOrdersModel) handleKeyboardLetters(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "j":
+		m.paginateDown()
+	case "k":
+		m.paginateUp()
 	}
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			m.settingsFormActive = true
-		case tea.KeyDown:
-			paginateDown()
-		case tea.KeyUp:
-			paginateUp()
-		default:
-			switch msg.String() {
-			case "j":
-				paginateDown()
-			case "k":
-				paginateUp()
-			}
-		}
-	case tea.MouseMsg:
-		switch tea.MouseEvent(msg).Button {
-		case tea.MouseButtonWheelDown:
-			paginateDown()
-		case tea.MouseButtonWheelUp:
-			paginateUp()
-		default:
-		}
+	return nil
+}
+
+func (m *getOrdersModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
+	switch msg.Type {
+	case tea.KeyCtrlC, tea.KeyEsc:
+		m.settingsFormActive = true
+	case tea.KeyDown:
+		m.paginateDown()
+	case tea.KeyUp:
+		m.paginateUp()
+	default:
+		m.handleKeyboardLetters(msg)
+	}
+
+	return nil
+}
+
+func (m *getOrdersModel) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	switch tea.MouseEvent(msg).Button {
+	case tea.MouseButtonWheelDown:
+		m.paginateDown()
+	case tea.MouseButtonWheelUp:
+		m.paginateUp()
 	default:
 	}
 
-	return m, nil
+	return nil
+}
+
+func (m *getOrdersModel) innerUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cmds := make([]tea.Cmd, 0)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		cmds = append(cmds, m.handleKeyboard(msg))
+	case tea.MouseMsg:
+		cmds = append(cmds, m.handleMouse(msg))
+	default:
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 // Update updates the model
@@ -247,6 +315,10 @@ func (m *getOrdersModel) updateData() error {
 			order.StorageTime.String(),
 			order.IssuedAt.Format("2006-01-02 15:04:05"),
 			order.ReturnedAt.Format("2006-01-02 15:04:05"),
+			strconv.Itoa(order.Weight),
+			strconv.Itoa(order.Cost),
+			order.Packaging.String(),
+			strconv.FormatBool(order.AdditionalFilm),
 		}
 	}
 	m.table.SetRows(rows)
@@ -257,8 +329,7 @@ func (m *getOrdersModel) updateData() error {
 
 func (m *getOrdersModel) innerView() string {
 	if m.changed {
-		err := m.updateData()
-		if err != nil {
+		if err := m.updateData(); err != nil {
 			return err.Error()
 		}
 		m.changed = false

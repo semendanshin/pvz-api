@@ -3,8 +3,6 @@ package cmds
 import (
 	"github.com/spf13/cobra"
 	"homework/internal/abstractions"
-	"homework/internal/infrastructure/repositories/pvzorder"
-	"homework/internal/usecases"
 )
 
 var getOrdersCmd = &cobra.Command{
@@ -13,9 +11,10 @@ var getOrdersCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Example: "hw1 get_orders <user_id>",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pvzOrderRepository := pvzorder.NewJSONRepository(cmd.Flag("orders").Value.String())
+		ordersFile, _ := cmd.Flags().GetString("orders")
+		pvzID, _ := cmd.Flags().GetString("pvz")
 
-		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, cmd.Flag("pvz").Value.String())
+		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
 
 		userID := args[0]
 

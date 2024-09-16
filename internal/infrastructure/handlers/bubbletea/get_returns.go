@@ -27,6 +27,10 @@ func newGetReturnsModel(useCase abstractions.IPVZOrderUseCase, pageSize int) *ge
 		{Title: "StorageTime", Width: 15},
 		{Title: "IssuedAt", Width: 20},
 		{Title: "ReturnedAt", Width: 20},
+		{Title: "Weight", Width: 10},
+		{Title: "Cost", Width: 10},
+		{Title: "Packaging", Width: 10},
+		{Title: "AdditionalFilm", Width: 15},
 	}
 	dataTable := table.New(
 		table.WithColumns(columns),
@@ -46,40 +50,53 @@ func (m *getReturnsModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *getReturnsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-		case tea.KeyDown:
-			m.page++
-			m.changed = true
-		case tea.KeyUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
-		default:
+func (m *getReturnsModel) handleKeyboard(msg tea.KeyMsg) tea.Cmd {
+	switch msg.Type {
+	case tea.KeyCtrlC, tea.KeyEsc:
+		return tea.Quit
+	case tea.KeyDown:
+		m.page++
+		m.changed = true
+	case tea.KeyUp:
+		m.page--
+		if m.page < 0 {
+			m.page = 0
 		}
-	case tea.MouseMsg:
-		switch tea.MouseEvent(msg).Button {
-		case tea.MouseButtonWheelDown:
-			m.page++
-			m.changed = true
-		case tea.MouseButtonWheelUp:
-			m.page--
-			if m.page < 0 {
-				m.page = 0
-			}
-			m.changed = true
-		default:
-		}
+		m.changed = true
 	default:
 	}
 
-	return m, nil
+	return nil
+}
+
+func (m *getReturnsModel) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	switch tea.MouseEvent(msg).Button {
+	case tea.MouseButtonWheelDown:
+		m.page++
+		m.changed = true
+	case tea.MouseButtonWheelUp:
+		m.page--
+		if m.page < 0 {
+			m.page = 0
+		}
+		m.changed = true
+	default:
+	}
+
+	return nil
+}
+
+func (m *getReturnsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cmds := make([]tea.Cmd, 0)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		cmds = append(cmds, m.handleKeyboard(msg))
+	case tea.MouseMsg:
+		cmds = append(cmds, m.handleMouse(msg))
+	default:
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m *getReturnsModel) View() string {
@@ -98,6 +115,10 @@ func (m *getReturnsModel) View() string {
 				order.StorageTime.String(),
 				order.IssuedAt.Format("2006-01-02 15:04:05"),
 				order.ReturnedAt.Format("2006-01-02 15:04:05"),
+				strconv.Itoa(order.Weight),
+				strconv.Itoa(order.Cost),
+				order.Packaging.String(),
+				strconv.FormatBool(order.AdditionalFilm),
 			}
 		}
 		m.table.SetRows(rows)

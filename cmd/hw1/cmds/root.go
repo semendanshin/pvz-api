@@ -2,23 +2,23 @@ package cmds
 
 import (
 	"github.com/spf13/cobra"
+	"homework/internal/abstractions"
+	"homework/internal/domain"
 	"homework/internal/infrastructure/handlers/bubbletea"
 	"homework/internal/infrastructure/repositories/pvzorder"
 	"homework/internal/usecases"
+	"homework/internal/usecases/packager"
+	"homework/internal/usecases/packager/strategies"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "hw1",
 	Short: "Homework 1",
 	Run: func(cmd *cobra.Command, args []string) {
-		orders, _ := cmd.Flags().GetString("orders")
-		pvz, _ := cmd.Flags().GetString("pvz")
+		ordersFile, _ := cmd.Flags().GetString("orders")
+		pvzID, _ := cmd.Flags().GetString("pvz")
 
-		print("orders: ", orders, " pvz: ", pvz)
-
-		pvzOrderRepository := pvzorder.NewJSONRepository(orders)
-
-		pvzOrderUseCase := usecases.NewPVZOrderUseCase(pvzOrderRepository, pvz)
+		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
 
 		handler := bubbletea.NewHandler(pvzOrderUseCase)
 
@@ -27,6 +27,25 @@ var rootCmd = &cobra.Command{
 			panic(err)
 		}
 	},
+}
+
+func InitUseCase(ordersFile string, pvzID string) abstractions.IPVZOrderUseCase {
+	pvzOrderRepository := pvzorder.NewJSONRepository(ordersFile)
+
+	orderPackager := packager.NewOrderPackager(
+		map[domain.PackagingType]abstractions.OrderPackagerStrategy{
+			domain.PackagingTypeBox:  strategies.NewBoxPackager(),
+			domain.PackagingTypeFilm: strategies.NewFilmPackager(),
+			domain.PackagingTypeBag:  strategies.NewBagPackager(),
+		},
+	)
+
+	return usecases.NewPVZOrderUseCase(
+		pvzOrderRepository,
+		orderPackager,
+		pvzID,
+	)
+
 }
 
 func init() {
