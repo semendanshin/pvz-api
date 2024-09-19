@@ -286,7 +286,7 @@ func (J *JSONRepository) GetOrder(orderID string) (domain.PVZOrder, error) {
 	}
 
 	for _, order := range fileStruct.Orders {
-		if order.OrderID == orderID {
+		if order.OrderID == orderID && order.DeletedAt.IsZero() {
 			return convertToDomain(order), nil
 		}
 	}

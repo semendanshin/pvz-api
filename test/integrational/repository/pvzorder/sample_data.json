@@ -1,0 +1,95 @@
+{
+  "orders": [
+    {
+      "order_id": "1",
+      "pvz_id": "1",
+      "recipient_id": "1",
+      "received_at": "2021-01-01T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "0001-01-01T00:00:00Z",
+      "returned_at": "0001-01-01T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "box"
+    },
+    {
+      "order_id": "2",
+      "pvz_id": "1",
+      "recipient_id": "1",
+      "received_at": "2021-01-02T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "0001-01-01T00:00:00Z",
+      "returned_at": "0001-01-01T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "bag"
+    },
+    {
+      "order_id": "3",
+      "pvz_id": "2",
+      "recipient_id": "1",
+      "received_at": "2021-01-03T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "0001-01-01T00:00:00Z",
+      "returned_at": "0001-01-01T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "film"
+    },
+    {
+      "order_id": "4",
+      "pvz_id": "1",
+      "recipient_id": "2",
+      "received_at": "2021-01-04T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "0001-01-01T00:00:00Z",
+      "returned_at": "0001-01-01T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "box"
+    },
+    {
+      "order_id": "5",
+      "pvz_id": "1",
+      "recipient_id": "2",
+      "received_at": "2021-01-01T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "2021-01-02T00:00:00Z",
+      "returned_at": "2021-01-03T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "box"
+    },
+    {
+      "order_id": "6",
+      "pvz_id": "1",
+      "recipient_id": "2",
+      "received_at": "2021-01-01T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "2021-01-02T00:00:00Z",
+      "returned_at": "2021-01-03T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "box"
+    },
+    {
+      "order_id": "7",
+      "pvz_id": "1",
+      "recipient_id": "2",
+      "received_at": "2021-01-01T00:00:00Z",
+      "storage_time": 86400000000000,
+      "issued_at": "2021-01-02T00:00:00Z",
+      "returned_at": "2021-01-03T00:00:00Z",
+      "weight": 1000,
+      "cost": 1000,
+      "additional_film": false,
+      "packaging": "box"
+    }
+  ]
+}
