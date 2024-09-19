@@ -2,11 +2,11 @@ package strategies
 
 import (
 	"fmt"
-	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.OrderPackagerStrategy = &BagPackager{}
+var _ usecases.OrderPackagerStrategy = &BagPackager{}
 
 const (
 	BagPackagingCost        = 5_00

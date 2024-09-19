@@ -107,17 +107,6 @@ func NewGetOrdersOptions(options ...GetOrdersOptFunc) (*GetOrdersOptions, error)
 	return &opts, nil
 }
 
-// PVZOrderRepository is an interface for order repository
-type PVZOrderRepository interface {
-	CreateOrder(order domain.PVZOrder) error
-	DeleteOrder(orderID string) error
-	SetOrderIssued(orderID string) error
-	SetOrderReturned(orderID string) error
-	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
-	GetOrder(orderID string) (domain.PVZOrder, error)
-	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
-}
-
 // IPVZOrderUseCase is an interface for order use cases
 type IPVZOrderUseCase interface {
 	AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error
@@ -126,12 +115,4 @@ type IPVZOrderUseCase interface {
 	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
 	AcceptReturn(userID, orderID string) error
 	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
-}
-
-type OrderPackagerInterface interface {
-	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
-}
-
-type OrderPackagerStrategy interface {
-	PackageOrder(order domain.PVZOrder) (domain.PVZOrder, error)
 }

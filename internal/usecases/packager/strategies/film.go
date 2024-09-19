@@ -1,11 +1,11 @@
 package strategies
 
 import (
-	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.OrderPackagerStrategy = &FilmPackager{}
+var _ usecases.OrderPackagerStrategy = &FilmPackager{}
 
 const (
 	FilmPackagingCost = 1_00

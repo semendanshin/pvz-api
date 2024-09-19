@@ -2,19 +2,19 @@ package packager
 
 import (
 	"fmt"
-	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.OrderPackagerInterface = &OrderPackager{}
+var _ usecases.OrderPackagerInterface = &OrderPackager{}
 
 // OrderPackager is a packager for orders
 type OrderPackager struct {
-	strategies map[domain.PackagingType]abstractions.OrderPackagerStrategy
+	strategies map[domain.PackagingType]usecases.OrderPackagerStrategy
 }
 
 // NewOrderPackager creates a new order packager
-func NewOrderPackager(strategies map[domain.PackagingType]abstractions.OrderPackagerStrategy) *OrderPackager {
+func NewOrderPackager(strategies map[domain.PackagingType]usecases.OrderPackagerStrategy) *OrderPackager {
 	return &OrderPackager{
 		strategies: strategies,
 	}

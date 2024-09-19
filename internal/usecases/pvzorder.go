@@ -16,15 +16,34 @@ const (
 
 var _ abstractions.IPVZOrderUseCase = &PVZOrderUseCase{}
 
+// PVZOrderRepository is an interface for order repository
+type PVZOrderRepository interface {
+	CreateOrder(order domain.PVZOrder) error
+	DeleteOrder(orderID string) error
+	SetOrderIssued(orderID string) error
+	SetOrderReturned(orderID string) error
+	GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error)
+	GetOrder(orderID string) (domain.PVZOrder, error)
+	GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error)
+}
+
+type OrderPackagerInterface interface {
+	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
+}
+
+type OrderPackagerStrategy interface {
+	PackageOrder(order domain.PVZOrder) (domain.PVZOrder, error)
+}
+
 // PVZOrderUseCase is a use case for order operations
 type PVZOrderUseCase struct {
-	repo         abstractions.PVZOrderRepository
-	packager     abstractions.OrderPackagerInterface
+	repo         PVZOrderRepository
+	packager     OrderPackagerInterface
 	currentPVZID string
 }
 
 // NewPVZOrderUseCase creates a new order use case
-func NewPVZOrderUseCase(repo abstractions.PVZOrderRepository, packager abstractions.OrderPackagerInterface, currentPVZID string) *PVZOrderUseCase {
+func NewPVZOrderUseCase(repo PVZOrderRepository, packager OrderPackagerInterface, currentPVZID string) *PVZOrderUseCase {
 	return &PVZOrderUseCase{
 		repo:         repo,
 		packager:     packager,
