@@ -16,6 +16,9 @@ const (
 
 var _ abstractions.IPVZOrderUseCase = &PVZOrderUseCase{}
 
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i PVZOrderRepository -s _mock.go -o ./mocks
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i OrderPackagerInterface -s _mock.go -o ./mocks
+
 // PVZOrderRepository is an interface for order repository
 type PVZOrderRepository interface {
 	CreateOrder(order domain.PVZOrder) error
@@ -29,10 +32,6 @@ type PVZOrderRepository interface {
 
 type OrderPackagerInterface interface {
 	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
-}
-
-type OrderPackagerStrategy interface {
-	PackageOrder(order domain.PVZOrder) (domain.PVZOrder, error)
 }
 
 // PVZOrderUseCase is a use case for order operations
@@ -145,7 +144,7 @@ func (P PVZOrderUseCase) GiveOrderToClient(orderIDs []string) error {
 		}
 	}
 
-	return P.setOrdersIssued(orders)
+	return P.processOrders(orders)
 }
 
 func (P PVZOrderUseCase) processOrders(orders []domain.PVZOrder) error {
