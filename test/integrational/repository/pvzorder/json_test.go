@@ -175,7 +175,6 @@ func TestJSONRepository_CreateOrder(t *testing.T) {
 	err := repo.CreateOrder(order)
 	assert.NoError(t, err)
 
-	// Check if the order was created
 	actual, err := repo.GetOrder("100")
 	assert.NoError(t, err)
 	assert.Equal(t, order.ReceivedAt.UnixMilli(), actual.ReceivedAt.UnixMilli())
@@ -192,7 +191,6 @@ func TestJSONRepository_DeleteOrder(t *testing.T) {
 	err := repo.DeleteOrder("1")
 	assert.NoError(t, err)
 
-	// Check if the order was deleted
 	_, err = repo.GetOrder("1")
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrNotFound))
@@ -205,7 +203,6 @@ func TestJSONRepository_SetOrderIssued(t *testing.T) {
 	err := repo.SetOrderIssued("1")
 	assert.NoError(t, err)
 
-	// Check if the order was issued
 	order, err := repo.GetOrder("1")
 	assert.NoError(t, err)
 	assert.NotEqual(t, time.Time{}, order.IssuedAt)
@@ -218,7 +215,6 @@ func TestJSONRepository_SetOrderReturned(t *testing.T) {
 	err := repo.SetOrderReturned("1")
 	assert.NoError(t, err)
 
-	// Check if the order was returned
 	order, err := repo.GetOrder("1")
 	assert.NoError(t, err)
 	assert.NotEqual(t, time.Time{}, order.ReturnedAt)
