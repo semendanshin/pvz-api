@@ -38,4 +38,4 @@ install-deps:
 
 coverage:
 	@echo "Running test coverage..."
-	@go test -coverprofile cover.out ./internal/usecases ./internal/usecases/packager
+	@go test -coverprofile /dev/null ./internal/usecases ./internal/usecases/packager
