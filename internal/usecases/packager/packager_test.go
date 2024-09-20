@@ -10,6 +10,8 @@ import (
 )
 
 func TestOrderPackager_PackageOrder(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		strategies map[domain.PackagingType]OrderPackagerStrategy
 	}

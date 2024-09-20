@@ -11,6 +11,8 @@ import (
 )
 
 func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
+	t.Parallel()
+
 	const pvzID = "currentPVZID"
 
 	type args struct {
@@ -101,6 +103,7 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 }
 
 func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
+	t.Parallel()
 
 	const pvzID = "currentPVZID"
 
@@ -200,6 +203,8 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 }
 
 func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
+	t.Parallel()
+
 	const pvzID = "currentPVZID"
 
 	type args struct {
@@ -309,6 +314,8 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 }
 
 func TestPVZOrderUseCase_GetOrders(t *testing.T) {
+	t.Parallel()
+
 	const pvzID = "currentPVZID"
 
 	type args struct {
@@ -363,6 +370,8 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 }
 
 func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
+	t.Parallel()
+
 	const pvzID = "currentPVZID"
 
 	type args struct {
@@ -486,6 +495,8 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 }
 
 func TestPVZOrderUseCase_GetReturns(t *testing.T) {
+	t.Parallel()
+
 	const pvzID = "currentPVZID"
 
 	ctrl := minimock.NewController(t)
