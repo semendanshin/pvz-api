@@ -45,3 +45,9 @@ coverage:
 run-db:
 	@echo "Running the database..."
 	@docker compose -f $(DATABASE_COMPOSE_FILE) up -d
+
+goose-install:
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+
+goose-add:
+	@goose -dir ./migrations -s create rename_me sql
