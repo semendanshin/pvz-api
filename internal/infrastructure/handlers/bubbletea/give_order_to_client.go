@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	"homework/internal/abstractions"
@@ -31,7 +32,7 @@ func newGiveOrderToClientModel(useCase abstractions.IPVZOrderUseCase) *FormModel
 			orderIDs[i] = strings.TrimSpace(orderIDs[i])
 		}
 
-		return useCase.GiveOrderToClient(orderIDs)
+		return useCase.GiveOrderToClient(context.Background(), orderIDs)
 	}
 
 	return NewFormModel(inputs, submit)

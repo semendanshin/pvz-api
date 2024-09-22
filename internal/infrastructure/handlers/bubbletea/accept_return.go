@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	"homework/internal/abstractions"
@@ -35,7 +36,10 @@ func newAcceptReturnModel(useCase abstractions.IPVZOrderUseCase) *FormModel {
 			return fmt.Errorf("orderID is empty")
 		}
 
-		return useCase.AcceptReturn(recipientIDValue, orderIDValue)
+		return useCase.AcceptReturn(
+			context.Background(),
+			recipientIDValue, orderIDValue,
+		)
 	}
 
 	return NewFormModel(inputs, submit)

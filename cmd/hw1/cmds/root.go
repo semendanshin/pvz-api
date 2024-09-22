@@ -13,7 +13,7 @@ func rootCMD(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			handler := bubbletea.NewHandler(pvzOrderUseCase)
 
-			err := handler.Run()
+			err := handler.Run(cmd.Context())
 			if err != nil {
 				panic(err)
 			}

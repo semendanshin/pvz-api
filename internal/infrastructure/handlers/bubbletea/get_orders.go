@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -299,6 +300,7 @@ func (m *getOrdersModel) updateData() error {
 		opts = append(opts, abstractions.WithSamePVZ())
 	}
 	orders, err := m.useCase.GetOrders(
+		context.Background(),
 		m.userID,
 		opts...,
 	)
