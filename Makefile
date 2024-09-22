@@ -51,3 +51,6 @@ goose-install:
 
 goose-add:
 	@goose -dir ./migrations -s create rename_me sql
+
+goose-up:
+	@goose -dir ./migrations postgres ${url} up

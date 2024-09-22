@@ -115,9 +115,9 @@ func (p *PostgresRepository) GetOrders(ctx context.Context, userID string, optio
 		LIMIT $3
 	`
 
-	var rows []pgxPvzOrder
+	var rows []*pgxPvzOrder
 
-	err = pgxscan.Select(ctx, p.pool, rows, query, userID, opts.PVZID, opts.Limit)
+	err = pgxscan.Select(ctx, p.pool, &rows, query, userID, opts.PVZID, opts.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (p *PostgresRepository) GetOrder(ctx context.Context, orderID string) (doma
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.PVZOrder{}, fmt.Errorf("%w: order not found", domain.ErrNotFound)
 		}
-		return domain.PVZOrder{}, err
+		return domain.PVZOrder{}, fmt.Errorf("failed to get order: %w", err)
 	}
 
 	return row.ToDomain(), nil
@@ -164,9 +164,9 @@ func (p *PostgresRepository) GetReturns(ctx context.Context, options ...abstract
 		LIMIT $1 OFFSET $2
 	`
 
-	var rows []pgxPvzOrder
+	var rows []*pgxPvzOrder
 
-	err = pgxscan.Select(ctx, p.pool, rows, query, opts.PageSize, opts.Page*opts.PageSize)
+	err = pgxscan.Select(ctx, p.pool, &rows, query, opts.PageSize, opts.Page*opts.PageSize)
 	if err != nil {
 		return nil, err
 	}

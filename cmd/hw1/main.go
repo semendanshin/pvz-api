@@ -1,32 +1,52 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"os"
+
 	"homework/cmd/hw1/cmds"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
-	"homework/internal/infrastructure/repositories/pvzorder"
+	"homework/internal/infrastructure/repositories/pvzorder/pgx"
 	"homework/internal/usecases"
 	"homework/internal/usecases/packager"
 	"homework/internal/usecases/packager/strategies"
-	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Run() error {
 	// Можно получить значение через стандартный пакет flag, но тогда это не будет отображаться в help
-	// ordersFile := flag.String("orders", "orders.json", "orders file")
 	// pvzID := flag.String("pvz", "1", "pvz id")
 
-	ordersFile := "orders.json"
 	pvzID := "1"
 
-	pvzOrderUseCase := initUseCase(ordersFile, pvzID)
+	// Наверное не очень круто будет передавать это через флаг. Я подумаю в сторону переменных окружения и .env файла
+	postgresURL := "host=localhost port=5430 user=test password=test dbname=test sslmode=disable"
 
-	return cmds.Execute(pvzOrderUseCase)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	pool, err := pgxpool.New(ctx, postgresURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	pvzOrderUseCase := initUseCase(pvzID, pool)
+
+	return cmds.Execute(ctx, pvzOrderUseCase)
 }
 
-func initUseCase(ordersFile string, pvzID string) abstractions.IPVZOrderUseCase {
-	pvzOrderRepository := pvzorder.NewJSONRepository(ordersFile)
+func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase {
+	pvzOrderRepository := pgx.NewPostgresRepository(pool)
 
 	orderPackager := packager.NewOrderPackager(
 		map[domain.PackagingType]abstractions.OrderPackagerStrategy{

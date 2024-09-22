@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"context"
 	"github.com/spf13/cobra"
 	"homework/internal/abstractions"
 	"homework/internal/infrastructure/handlers/bubbletea"
@@ -26,8 +27,9 @@ func rootCMD(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 	return command
 }
 
-func setup(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
+func setup(ctx context.Context, pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 	rootCmd := rootCMD(pvzOrderUseCase)
+	rootCmd.SetContext(ctx)
 
 	rootCmd.AddCommand(acceptDeliveryCmd(pvzOrderUseCase))
 	rootCmd.AddCommand(acceptReturnCmd(pvzOrderUseCase))
@@ -40,6 +42,6 @@ func setup(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 }
 
 // Execute executes the root command.
-func Execute(pvzOrderUseCase abstractions.IPVZOrderUseCase) error {
-	return setup(pvzOrderUseCase).Execute()
+func Execute(ctx context.Context, pvzOrderUseCase abstractions.IPVZOrderUseCase) error {
+	return setup(ctx, pvzOrderUseCase).Execute()
 }

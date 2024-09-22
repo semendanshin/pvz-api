@@ -145,7 +145,7 @@ func (P PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []strin
 		}
 	}
 
-	return P.setOrdersIssued(ctx, orders)
+	return P.processOrders(ctx, orders)
 }
 
 func (P PVZOrderUseCase) processOrders(ctx context.Context, orders []domain.PVZOrder) error {
