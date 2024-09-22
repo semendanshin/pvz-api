@@ -14,7 +14,7 @@ func returnOrderDeliveryCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobr
 		RunE: func(cmd *cobra.Command, args []string) error {
 			orderID := args[0]
 
-			err := pvzOrderUseCase.ReturnOrderDelivery(orderID)
+			err := pvzOrderUseCase.ReturnOrderDelivery(cmd.Context(), orderID)
 			if err != nil {
 				return err
 			}

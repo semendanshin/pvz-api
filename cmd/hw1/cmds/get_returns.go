@@ -16,6 +16,7 @@ func getReturnsCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command
 			pageSize, _ := cmd.Flags().GetInt("pageSize")
 
 			data, err := pvzOrderUseCase.GetReturns(
+				cmd.Context(),
 				abstractions.WithPage(page),
 				abstractions.WithPageSize(pageSize),
 			)

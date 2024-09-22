@@ -12,7 +12,7 @@ func giveOrderToClientCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.
 		Args:    cobra.MinimumNArgs(1),
 		Example: "hw1 give_orders <order_id1> <order_id2> ...",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := pvzOrderUseCase.GiveOrderToClient(args)
+			err := pvzOrderUseCase.GiveOrderToClient(cmd.Context(), args)
 			if err != nil {
 				return err
 			}

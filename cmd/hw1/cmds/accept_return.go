@@ -15,7 +15,7 @@ func acceptReturnCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Comma
 			recipientID := args[0]
 			orderID := args[1]
 
-			err := pvzOrderUseCase.AcceptReturn(recipientID, orderID)
+			err := pvzOrderUseCase.AcceptReturn(cmd.Context(), recipientID, orderID)
 			if err != nil {
 				return err
 			}

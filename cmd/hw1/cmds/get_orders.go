@@ -31,7 +31,7 @@ func getOrdersCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command 
 				opts = append(opts, abstractions.WithLimit(limit))
 			}
 
-			data, err := pvzOrderUseCase.GetOrders(userID, opts...)
+			data, err := pvzOrderUseCase.GetOrders(cmd.Context(), userID, opts...)
 			if err != nil {
 				return err
 			}

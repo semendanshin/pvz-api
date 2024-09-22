@@ -47,6 +47,7 @@ func acceptDeliveryCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Com
 			additionalFilm, _ := cmd.Flags().GetBool("additional_film")
 
 			err = pvzOrderUseCase.AcceptOrderDelivery(
+				cmd.Context(),
 				orderID,
 				recipientID,
 				storageTime,
