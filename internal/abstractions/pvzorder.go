@@ -109,10 +109,10 @@ func NewGetOrdersOptions(options ...GetOrdersOptFunc) (*GetOrdersOptions, error)
 
 // IPVZOrderUseCase is an interface for order use cases
 type IPVZOrderUseCase interface {
-	AcceptOrderDelivery(orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error
-	ReturnOrderDelivery(orderID string) error
-	GiveOrderToClient(orderIDs []string) error
-	GetOrders(userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
-	AcceptReturn(userID, orderID string) error
-	GetReturns(options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
+	AcceptOrderDelivery(ctx context.Context, orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error
+	ReturnOrderDelivery(ctx context.Context, orderID string) error
+	GiveOrderToClient(ctx context.Context, orderIDs []string) error
+	GetOrders(ctx context.Context, userID string, options ...GetOrdersOptFunc) ([]domain.PVZOrder, error)
+	AcceptReturn(ctx context.Context, userID, orderID string) error
+	GetReturns(ctx context.Context, options ...PagePaginationOptFunc) ([]domain.PVZOrder, error)
 }
