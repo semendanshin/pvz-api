@@ -2,28 +2,28 @@ package cmds
 
 import (
 	"github.com/spf13/cobra"
+	"homework/internal/abstractions"
 )
 
-var returnOrderDeliveryCmd = &cobra.Command{
-	Use:     "return_delivery",
-	Short:   "Return order delivery",
-	Args:    cobra.ExactArgs(1),
-	Example: "hw1 return_delivery <order_id>",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ordersFile, _ := cmd.Flags().GetString("orders")
-		pvzID, _ := cmd.Flags().GetString("pvz")
+func returnOrderDeliveryCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
+	command := &cobra.Command{
+		Use:     "return_delivery",
+		Short:   "Return order delivery",
+		Args:    cobra.ExactArgs(1),
+		Example: "hw1 return_delivery <order_id>",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			orderID := args[0]
 
-		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
+			err := pvzOrderUseCase.ReturnOrderDelivery(orderID)
+			if err != nil {
+				return err
+			}
 
-		orderID := args[0]
+			cmd.Println("Delivery returned")
 
-		err := pvzOrderUseCase.ReturnOrderDelivery(orderID)
-		if err != nil {
-			return err
-		}
+			return nil
+		},
+	}
 
-		cmd.Println("Delivery returned")
-
-		return nil
-	},
+	return command
 }

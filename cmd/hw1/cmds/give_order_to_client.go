@@ -2,26 +2,26 @@ package cmds
 
 import (
 	"github.com/spf13/cobra"
+	"homework/internal/abstractions"
 )
 
-var giveOrderToClientCmd = &cobra.Command{
-	Use:     "give_orders",
-	Short:   "Give orders to client",
-	Args:    cobra.MinimumNArgs(1),
-	Example: "hw1 give_orders <order_id1> <order_id2> ...",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ordersFile, _ := cmd.Flags().GetString("orders")
-		pvzID, _ := cmd.Flags().GetString("pvz")
+func giveOrderToClientCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
+	command := &cobra.Command{
+		Use:     "give_orders",
+		Short:   "Give orders to client",
+		Args:    cobra.MinimumNArgs(1),
+		Example: "hw1 give_orders <order_id1> <order_id2> ...",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := pvzOrderUseCase.GiveOrderToClient(args)
+			if err != nil {
+				return err
+			}
 
-		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
+			cmd.Println("Orders given to client")
 
-		err := pvzOrderUseCase.GiveOrderToClient(args)
-		if err != nil {
-			return err
-		}
+			return nil
+		},
+	}
 
-		cmd.Println("Orders given to client")
-
-		return nil
-	},
+	return command
 }

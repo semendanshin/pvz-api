@@ -5,38 +5,35 @@ import (
 	"homework/internal/abstractions"
 )
 
-var getReturnsCmd = &cobra.Command{
-	Use:     "get_returns",
-	Short:   "Get returns",
-	Args:    cobra.NoArgs,
-	Example: "hw1 get_returns",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ordersFile, _ := cmd.Flags().GetString("orders")
-		pvzID, _ := cmd.Flags().GetString("pvz")
+func getReturnsCmd(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
+	command := &cobra.Command{
+		Use:     "get_returns",
+		Short:   "Get returns",
+		Args:    cobra.NoArgs,
+		Example: "hw1 get_returns",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			page, _ := cmd.Flags().GetInt("page")
+			pageSize, _ := cmd.Flags().GetInt("pageSize")
 
-		pvzOrderUseCase := InitUseCase(ordersFile, pvzID)
+			data, err := pvzOrderUseCase.GetReturns(
+				abstractions.WithPage(page),
+				abstractions.WithPageSize(pageSize),
+			)
+			if err != nil {
+				return err
+			}
 
-		page, _ := cmd.Flags().GetInt("page")
-		pageSize, _ := cmd.Flags().GetInt("pageSize")
+			cmd.Println("Returns:")
+			for _, order := range data {
+				cmd.Println(order)
+			}
 
-		data, err := pvzOrderUseCase.GetReturns(
-			abstractions.WithPage(page),
-			abstractions.WithPageSize(pageSize),
-		)
-		if err != nil {
-			return err
-		}
+			return nil
+		},
+	}
 
-		cmd.Println("Returns:")
-		for _, order := range data {
-			cmd.Println(order)
-		}
+	command.Flags().Int("page", 0, "page")
+	command.Flags().Int("pageSize", 10, "page size")
 
-		return nil
-	},
-}
-
-func init() {
-	getReturnsCmd.Flags().Int("page", 0, "page")
-	getReturnsCmd.Flags().Int("pageSize", 10, "page size")
+	return command
 }
