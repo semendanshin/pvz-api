@@ -5,9 +5,10 @@ import (
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.PVZOrderRepository = &PvzOrderFacade{}
+var _ usecases.PVZOrderRepository = &PvzOrderFacade{}
 
 type PvzOrderFacade struct {
 	manager *txmanager.PGXTXManager

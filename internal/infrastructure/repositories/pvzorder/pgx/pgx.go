@@ -9,9 +9,10 @@ import (
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.PVZOrderRepository = &PostgresRepository{}
+var _ usecases.PVZOrderRepository = &PostgresRepository{}
 
 type PostgresRepository struct {
 	manager *txmanager.PGXTXManager

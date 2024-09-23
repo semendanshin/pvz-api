@@ -51,7 +51,7 @@ func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase
 	pvzOrderRepoFacade := pgx.NewPgxPvzOrderFacade(txManager)
 
 	orderPackager := packager.NewOrderPackager(
-		map[domain.PackagingType]abstractions.OrderPackagerStrategy{
+		map[domain.PackagingType]packager.OrderPackagerStrategy{
 			domain.PackagingTypeBox:  strategies.NewBoxPackager(),
 			domain.PackagingTypeFilm: strategies.NewFilmPackager(),
 			domain.PackagingTypeBag:  strategies.NewBagPackager(),

@@ -1,6 +1,7 @@
 package pvzorder
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/pvzorder"
@@ -12,6 +13,10 @@ import (
 )
 
 func BenchmarkJsonPVZOrderRepository_CreateOrder(b *testing.B) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo := pvzorder.NewJSONRepository("test.json")
 	defer os.Remove("test.json")
 
@@ -28,7 +33,7 @@ func BenchmarkJsonPVZOrderRepository_CreateOrder(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := repo.CreateOrder(order)
+		err := repo.CreateOrder(ctx, order)
 		assert.NoError(b, err)
 	}
 
@@ -37,6 +42,10 @@ func BenchmarkJsonPVZOrderRepository_CreateOrder(b *testing.B) {
 
 func BenchmarkJsonPVZOrderRepository_GetOrder(b *testing.B) {
 	const maxID = 1000
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	repo := pvzorder.NewJSONRepository("test.json")
 	defer os.Remove("test.json")
@@ -52,7 +61,7 @@ func BenchmarkJsonPVZOrderRepository_GetOrder(b *testing.B) {
 			domain.PackagingTypeBox,
 			false,
 		)
-		err := repo.CreateOrder(order)
+		err := repo.CreateOrder(ctx, order)
 		assert.NoError(b, err)
 	}
 
@@ -60,7 +69,7 @@ func BenchmarkJsonPVZOrderRepository_GetOrder(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		id := rand.Intn(maxID)
-		_, err := repo.GetOrder(strconv.Itoa(id))
+		_, err := repo.GetOrder(ctx, strconv.Itoa(id))
 		assert.NoError(b, err)
 	}
 

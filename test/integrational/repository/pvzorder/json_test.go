@@ -1,6 +1,7 @@
 package pvzorder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -158,6 +159,10 @@ func setupTest(t *testing.T) (*pvzorder.JSONRepository, func()) {
 }
 
 func TestJSONRepository_CreateOrder(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
@@ -172,10 +177,10 @@ func TestJSONRepository_CreateOrder(t *testing.T) {
 		false,
 	)
 
-	err := repo.CreateOrder(order)
+	err := repo.CreateOrder(ctx, order)
 	assert.NoError(t, err)
 
-	actual, err := repo.GetOrder("100")
+	actual, err := repo.GetOrder(ctx, "100")
 	assert.NoError(t, err)
 	assert.Equal(t, order.ReceivedAt.UnixMilli(), actual.ReceivedAt.UnixMilli())
 	// при маршалинге и демаршалинге время из наносекунд?? превращается в миллисекунды??, поэтому сравнивать их не получится
@@ -185,42 +190,58 @@ func TestJSONRepository_CreateOrder(t *testing.T) {
 }
 
 func TestJSONRepository_DeleteOrder(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
-	err := repo.DeleteOrder("1")
+	err := repo.DeleteOrder(ctx, "1")
 	assert.NoError(t, err)
 
-	_, err = repo.GetOrder("1")
+	_, err = repo.GetOrder(ctx, "1")
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrNotFound))
 }
 
 func TestJSONRepository_SetOrderIssued(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
-	err := repo.SetOrderIssued("1")
+	err := repo.SetOrderIssued(ctx, "1")
 	assert.NoError(t, err)
 
-	order, err := repo.GetOrder("1")
+	order, err := repo.GetOrder(ctx, "1")
 	assert.NoError(t, err)
 	assert.NotEqual(t, time.Time{}, order.IssuedAt)
 }
 
 func TestJSONRepository_SetOrderReturned(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
-	err := repo.SetOrderReturned("1")
+	err := repo.SetOrderReturned(ctx, "1")
 	assert.NoError(t, err)
 
-	order, err := repo.GetOrder("1")
+	order, err := repo.GetOrder(ctx, "1")
 	assert.NoError(t, err)
 	assert.NotEqual(t, time.Time{}, order.ReturnedAt)
 }
 
 func TestJSONRepository_GetOrders(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
@@ -288,7 +309,7 @@ func TestJSONRepository_GetOrders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders, err := repo.GetOrders(tt.args.userID, tt.args.opts...)
+			orders, err := repo.GetOrders(ctx, tt.args.userID, tt.args.opts...)
 			tt.want(orders)
 			tt.wantErr(t, err)
 		})
@@ -296,6 +317,10 @@ func TestJSONRepository_GetOrders(t *testing.T) {
 }
 
 func TestJSONRepository_GetOrder(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
@@ -343,7 +368,7 @@ func TestJSONRepository_GetOrder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetOrder(tt.args.orderID)
+			got, err := repo.GetOrder(ctx, tt.args.orderID)
 			assert.Equal(t, tt.want, got)
 			tt.wantErr(t, err)
 		})
@@ -351,6 +376,10 @@ func TestJSONRepository_GetOrder(t *testing.T) {
 }
 
 func TestJSONRepository_GetReturns(t *testing.T) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	repo, tearDown := setupTest(t)
 	defer tearDown()
 
@@ -391,7 +420,7 @@ func TestJSONRepository_GetReturns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orders, err := repo.GetReturns(tt.args.opts...)
+			orders, err := repo.GetReturns(ctx, tt.args.opts...)
 			tt.want(orders)
 			tt.wantErr(t, err)
 		})

@@ -22,13 +22,13 @@ var _ abstractions.IPVZOrderUseCase = &PVZOrderUseCase{}
 
 // PVZOrderRepository is an interface for order repository
 type PVZOrderRepository interface {
-	CreateOrder(order domain.PVZOrder) error
-	DeleteOrder(orderID string) error
-	SetOrderIssued(orderID string) error
-	SetOrderReturned(orderID string) error
-	GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error)
-	GetOrder(orderID string) (domain.PVZOrder, error)
-	GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error)
+	CreateOrder(ctx context.Context, order domain.PVZOrder) error
+	DeleteOrder(ctx context.Context, orderID string) error
+	SetOrderIssued(ctx context.Context, orderID string) error
+	SetOrderReturned(ctx context.Context, orderID string) error
+	GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error)
+	GetOrder(ctx context.Context, orderID string) (domain.PVZOrder, error)
+	GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error)
 }
 
 type OrderPackagerInterface interface {

@@ -1,6 +1,7 @@
 package pvzorder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,10 @@ func (s *JSONRepositorySuite) SetupTest() {
 }
 
 func (s *JSONRepositorySuite) TestCreateOrder() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	order := domain.NewPVZOrder(
 		"100",
 		"1",
@@ -44,10 +49,10 @@ func (s *JSONRepositorySuite) TestCreateOrder() {
 		false,
 	)
 
-	err := s.storage.CreateOrder(order)
+	err := s.storage.CreateOrder(ctx, order)
 	s.Require().NoError(err)
 
-	actualOrder, err := s.storage.GetOrder("100")
+	actualOrder, err := s.storage.GetOrder(ctx, "100")
 	s.Require().NoError(err)
 
 	s.Equal(order.ReceivedAt.UnixMilli(), actualOrder.ReceivedAt.UnixMilli())
@@ -56,35 +61,51 @@ func (s *JSONRepositorySuite) TestCreateOrder() {
 }
 
 func (s *JSONRepositorySuite) TestDeleteOrder() {
-	err := s.storage.DeleteOrder("1")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := s.storage.DeleteOrder(ctx, "1")
 	s.Require().NoError(err)
 
-	_, err = s.storage.GetOrder("1")
+	_, err = s.storage.GetOrder(ctx, "1")
 	s.Error(err)
 	s.ErrorIs(err, domain.ErrNotFound)
 }
 
 func (s *JSONRepositorySuite) TestSetOrderIssued() {
-	err := s.storage.SetOrderIssued("1")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := s.storage.SetOrderIssued(ctx, "1")
 	s.Require().NoError(err)
 
-	order, err := s.storage.GetOrder("1")
+	order, err := s.storage.GetOrder(ctx, "1")
 	s.Require().NoError(err)
 
 	s.NotZero(order.IssuedAt)
 }
 
 func (s *JSONRepositorySuite) TestSetOrderReturned() {
-	err := s.storage.SetOrderReturned("1")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := s.storage.SetOrderReturned(ctx, "1")
 	s.Require().NoError(err)
 
-	order, err := s.storage.GetOrder("1")
+	order, err := s.storage.GetOrder(ctx, "1")
 	s.Require().NoError(err)
 
 	s.NotZero(order.ReturnedAt)
 }
 
 func (s *JSONRepositorySuite) TestGetOrders() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	type args struct {
 		userID string
 		opts   []abstractions.GetOrdersOptFunc
@@ -144,7 +165,7 @@ func (s *JSONRepositorySuite) TestGetOrders() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			orders, err := s.storage.GetOrders(tt.args.userID, tt.args.opts...)
+			orders, err := s.storage.GetOrders(ctx, tt.args.userID, tt.args.opts...)
 			tt.want(orders)
 			s.NoError(err)
 		})
@@ -152,6 +173,10 @@ func (s *JSONRepositorySuite) TestGetOrders() {
 }
 
 func (s *JSONRepositorySuite) TestGetOrder() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	type args struct {
 		orderID string
 	}
@@ -196,7 +221,7 @@ func (s *JSONRepositorySuite) TestGetOrder() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			order, err := s.storage.GetOrder(tt.args.orderID)
+			order, err := s.storage.GetOrder(ctx, tt.args.orderID)
 			tt.wantErr(s.T(), err)
 			s.Equal(tt.want, order)
 		})
