@@ -1,4 +1,4 @@
-package pvzorder
+package json
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
-	"homework/internal/infrastructure/repositories/pvzorder"
+	"homework/internal/infrastructure/repositories/pvzorder/json"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ import (
 
 type JSONRepositorySuite struct {
 	suite.Suite
-	storage *pvzorder.JSONRepository
+	storage *json.JSONRepository
 }
 
 func (s *JSONRepositorySuite) SetupTest() {
@@ -25,7 +25,7 @@ func (s *JSONRepositorySuite) SetupTest() {
 	err := copyFile("sample_data.json", fileName)
 	s.Require().NoError(err)
 
-	s.storage = pvzorder.NewJSONRepository(fileName)
+	s.storage = json.NewJSONRepository(fileName)
 
 	s.T().Cleanup(func() {
 		err := os.Remove(fileName)

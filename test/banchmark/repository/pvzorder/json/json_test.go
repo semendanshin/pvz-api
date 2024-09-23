@@ -1,10 +1,10 @@
-package pvzorder
+package json
 
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"homework/internal/domain"
-	"homework/internal/infrastructure/repositories/pvzorder"
+	"homework/internal/infrastructure/repositories/pvzorder/json"
 	"math/rand"
 	"os"
 	"strconv"
@@ -17,7 +17,7 @@ func BenchmarkJsonPVZOrderRepository_CreateOrder(b *testing.B) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	repo := pvzorder.NewJSONRepository("test.json")
+	repo := json.NewJSONRepository("test.json")
 	defer os.Remove("test.json")
 
 	order := domain.NewPVZOrder(
@@ -47,7 +47,7 @@ func BenchmarkJsonPVZOrderRepository_GetOrder(b *testing.B) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	repo := pvzorder.NewJSONRepository("test.json")
+	repo := json.NewJSONRepository("test.json")
 	defer os.Remove("test.json")
 
 	for i := 0; i < maxID; i++ {

@@ -1,4 +1,4 @@
-package pvzorder
+package json
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
-	"homework/internal/infrastructure/repositories/pvzorder"
+	"homework/internal/infrastructure/repositories/pvzorder/json"
 	"os"
 	"testing"
 	"time"
@@ -138,7 +138,7 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
-func setupTest(t *testing.T) (*pvzorder.JSONRepository, func()) {
+func setupTest(t *testing.T) (*json.JSONRepository, func()) {
 	t.Helper()
 
 	fileName := fmt.Sprintf("test_%v.json", time.Now().Unix())
@@ -148,7 +148,7 @@ func setupTest(t *testing.T) (*pvzorder.JSONRepository, func()) {
 		t.Fatal(err)
 	}
 
-	repo := pvzorder.NewJSONRepository(fileName)
+	repo := json.NewJSONRepository(fileName)
 
 	return repo, func() {
 		err := os.Remove(fileName)
