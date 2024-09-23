@@ -79,7 +79,6 @@ func intervalToDuration(i pgtype.Interval) time.Duration {
 }
 
 func (p *pgxPvzOrder) ToDomain() domain.PVZOrder {
-	println(p.StorageTime.Value())
 	return domain.PVZOrder{
 		OrderID:     p.OrderID,
 		PVZID:       p.PVZID,

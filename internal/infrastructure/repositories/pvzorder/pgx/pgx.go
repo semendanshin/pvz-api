@@ -118,7 +118,6 @@ func (p *PostgresRepository) GetOrders(ctx context.Context, userID string, optio
 		return nil, err
 	}
 
-	// Rows are sorted by received_at in descending order, but cursor in pagination points on the order_id. Also there should be limit lastN and on top of that the limit of pagination. Maybe we need to use a subquery to get the lastN orders and then paginate them.
 	const query = `
 		WITH subquery AS (
 			SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at, 
