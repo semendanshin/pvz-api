@@ -2,19 +2,26 @@ package packager
 
 import (
 	"fmt"
-	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/usecases"
 )
 
-var _ abstractions.OrderPackagerInterface = &OrderPackager{}
+var _ usecases.OrderPackagerInterface = &OrderPackager{}
+
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i OrderPackagerStrategy -s _mock.go -o ./mocks
+
+// OrderPackagerStrategy is a strategy for packaging orders
+type OrderPackagerStrategy interface {
+	PackageOrder(order domain.PVZOrder) (domain.PVZOrder, error)
+}
 
 // OrderPackager is a packager for orders
 type OrderPackager struct {
-	strategies map[domain.PackagingType]abstractions.OrderPackagerStrategy
+	strategies map[domain.PackagingType]OrderPackagerStrategy
 }
 
 // NewOrderPackager creates a new order packager
-func NewOrderPackager(strategies map[domain.PackagingType]abstractions.OrderPackagerStrategy) *OrderPackager {
+func NewOrderPackager(strategies map[domain.PackagingType]OrderPackagerStrategy) *OrderPackager {
 	return &OrderPackager{
 		strategies: strategies,
 	}

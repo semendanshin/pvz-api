@@ -35,3 +35,7 @@ run-dev:
 install-deps:
 	@echo "Installing dependencies..."
 	@go mod download
+
+coverage:
+	@echo "Running test coverage..."
+	@go test -coverprofile /dev/null ./internal/usecases ./internal/usecases/packager

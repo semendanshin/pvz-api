@@ -1,0 +1,6 @@
+exec hw -o "test.json" accept_delivery 123 123 5h 50000 2000 box
+stdout 'Delivery accepted'
+
+# Fail
+! exec hw -o "test.json" accept_delivery 123 123 5h 50000 2000 box
+stderr ''

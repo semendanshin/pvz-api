@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/usecases"
 	"os"
 	"slices"
 	"time"
 )
 
-var _ abstractions.PVZOrderRepository = &JSONRepository{}
+var _ usecases.PVZOrderRepository = &JSONRepository{}
 
 type pvzOrder struct {
 	OrderID     string `json:"order_id"`
@@ -285,7 +286,7 @@ func (J *JSONRepository) GetOrder(orderID string) (domain.PVZOrder, error) {
 	}
 
 	for _, order := range fileStruct.Orders {
-		if order.OrderID == orderID {
+		if order.OrderID == orderID && order.DeletedAt.IsZero() {
 			return convertToDomain(order), nil
 		}
 	}

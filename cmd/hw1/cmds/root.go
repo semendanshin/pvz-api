@@ -9,6 +9,7 @@ import (
 	"homework/internal/usecases"
 	"homework/internal/usecases/packager"
 	"homework/internal/usecases/packager/strategies"
+	"os"
 )
 
 var rootCmd = &cobra.Command{
@@ -33,7 +34,7 @@ func InitUseCase(ordersFile string, pvzID string) abstractions.IPVZOrderUseCase 
 	pvzOrderRepository := pvzorder.NewJSONRepository(ordersFile)
 
 	orderPackager := packager.NewOrderPackager(
-		map[domain.PackagingType]abstractions.OrderPackagerStrategy{
+		map[domain.PackagingType]packager.OrderPackagerStrategy{
 			domain.PackagingTypeBox:  strategies.NewBoxPackager(),
 			domain.PackagingTypeFilm: strategies.NewFilmPackager(),
 			domain.PackagingTypeBag:  strategies.NewBagPackager(),
@@ -58,6 +59,8 @@ func init() {
 	rootCmd.AddCommand(getReturnsCmd)
 	rootCmd.AddCommand(giveOrderToClientCmd)
 	rootCmd.AddCommand(returnOrderDeliveryCmd)
+
+	rootCmd.SetOut(os.Stdout)
 }
 
 // Execute executes the root command.
