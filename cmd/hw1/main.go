@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"log"
 	"os"
 
@@ -46,7 +47,8 @@ func Run() error {
 }
 
 func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase {
-	pvzOrderRepository := pgx.NewPostgresRepository(pool)
+	txManager := txmanager.NewPGXTXManager(pool)
+	pvzOrderRepoFacade := pgx.NewPgxPvzOrderFacade(txManager)
 
 	orderPackager := packager.NewOrderPackager(
 		map[domain.PackagingType]abstractions.OrderPackagerStrategy{
@@ -57,7 +59,7 @@ func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase
 	)
 
 	return usecases.NewPVZOrderUseCase(
-		pvzOrderRepository,
+		pvzOrderRepoFacade,
 		orderPackager,
 		pvzID,
 	)

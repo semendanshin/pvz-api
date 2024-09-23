@@ -6,19 +6,21 @@ import (
 	"fmt"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 )
 
 var _ abstractions.PVZOrderRepository = &PostgresRepository{}
 
 type PostgresRepository struct {
-	pool *pgxpool.Pool
+	manager *txmanager.PGXTXManager
 }
 
-func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
-	return &PostgresRepository{pool: pool}
+func NewPostgresRepository(manager *txmanager.PGXTXManager) *PostgresRepository {
+	return &PostgresRepository{
+		manager: manager,
+	}
 }
 
 func (p *PostgresRepository) CreateOrder(ctx context.Context, order domain.PVZOrder) error {
@@ -27,9 +29,11 @@ func (p *PostgresRepository) CreateOrder(ctx context.Context, order domain.PVZOr
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
+	engine := p.manager.GetQueryEngine(ctx)
+
 	entity := newPgxPvzOrder(order)
 
-	_, err := p.pool.Exec(ctx, query,
+	_, err := engine.Exec(ctx, query,
 		entity.OrderID,
 		entity.PVZID,
 		entity.RecipientID,
@@ -57,7 +61,9 @@ func (p *PostgresRepository) DeleteOrder(ctx context.Context, orderID string) er
 		WHERE order_id = $1
 	`
 
-	_, err := p.pool.Exec(ctx, query, orderID)
+	engine := p.manager.GetQueryEngine(ctx)
+
+	_, err := engine.Exec(ctx, query, orderID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return fmt.Errorf("%w: order not found", domain.ErrNotFound)
@@ -74,7 +80,9 @@ func (p *PostgresRepository) SetOrderIssued(ctx context.Context, orderID string)
 		WHERE order_id = $1
 	`
 
-	_, err := p.pool.Exec(ctx, query, orderID)
+	engine := p.manager.GetQueryEngine(ctx)
+
+	_, err := engine.Exec(ctx, query, orderID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return fmt.Errorf("%w: order not found", domain.ErrNotFound)
@@ -91,7 +99,9 @@ func (p *PostgresRepository) SetOrderReturned(ctx context.Context, orderID strin
 		WHERE order_id = $1
 	`
 
-	_, err := p.pool.Exec(ctx, query, orderID)
+	engine := p.manager.GetQueryEngine(ctx)
+
+	_, err := engine.Exec(ctx, query, orderID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return fmt.Errorf("%w: order not found", domain.ErrNotFound)
@@ -115,9 +125,11 @@ func (p *PostgresRepository) GetOrders(ctx context.Context, userID string, optio
 		LIMIT $3
 	`
 
+	engine := p.manager.GetQueryEngine(ctx)
+
 	var rows []*pgxPvzOrder
 
-	err = pgxscan.Select(ctx, p.pool, &rows, query, userID, opts.PVZID, opts.Limit)
+	err = pgxscan.Select(ctx, engine, &rows, query, userID, opts.PVZID, opts.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +149,11 @@ func (p *PostgresRepository) GetOrder(ctx context.Context, orderID string) (doma
 		WHERE order_id = $1
 	`
 
+	engine := p.manager.GetQueryEngine(ctx)
+
 	var row pgxPvzOrder
 
-	err := pgxscan.Get(ctx, p.pool, &row, query, orderID)
+	err := pgxscan.Get(ctx, engine, &row, query, orderID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.PVZOrder{}, fmt.Errorf("%w: order not found", domain.ErrNotFound)
@@ -164,9 +178,11 @@ func (p *PostgresRepository) GetReturns(ctx context.Context, options ...abstract
 		LIMIT $1 OFFSET $2
 	`
 
+	engine := p.manager.GetQueryEngine(ctx)
+
 	var rows []*pgxPvzOrder
 
-	err = pgxscan.Select(ctx, p.pool, &rows, query, opts.PageSize, opts.Page*opts.PageSize)
+	err = pgxscan.Select(ctx, engine, &rows, query, opts.PageSize, opts.Page*opts.PageSize)
 	if err != nil {
 		return nil, err
 	}
