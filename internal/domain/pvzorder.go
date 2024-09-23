@@ -61,7 +61,7 @@ func NewPVZOrder(orderID, pvzID, recipientID string, cost, weight int, storageTi
 		Weight:         weight,
 		Packaging:      packaging,
 		AdditionalFilm: additionalFilm,
-		ReceivedAt:     time.Now(),
+		ReceivedAt:     time.Now().UTC(),
 		StorageTime:    storageTime,
 	}
 }

@@ -118,19 +118,38 @@ func (p *PostgresRepository) GetOrders(ctx context.Context, userID string, optio
 		return nil, err
 	}
 
+	// Rows are sorted by received_at in descending order, but cursor in pagination points on the order_id. Also there should be limit lastN and on top of that the limit of pagination. Maybe we need to use a subquery to get the lastN orders and then paginate them.
 	const query = `
+		WITH subquery AS (
+			SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at, 
+				   ROW_NUMBER() OVER (ORDER BY received_at DESC) AS rn
+			FROM pvz_orders
+			WHERE recipient_id = $1 
+			  AND (pvz_id = $2 OR $2 = '') 
+			  AND deleted_at IS NULL
+			ORDER BY received_at DESC
+			LIMIT CASE WHEN $3 = 0 THEN NULL ELSE $3 END
+		), firstRowN AS (
+			SELECT rn 
+			FROM subquery 
+			WHERE order_id = $4 OR $4 = ''
+			ORDER BY rn ASC
+			LIMIT 1
+		), row_boundary AS (
+			SELECT COALESCE((SELECT rn FROM firstRowN), 1) AS start_row
+		)
 		SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
-		FROM pvz_orders
-		WHERE recipient_id = $1 AND (pvz_id = $2 OR $2 = '') AND deleted_at IS NULL
-		ORDER BY received_at DESC
-		LIMIT $3
+		FROM subquery, row_boundary
+		WHERE subquery.rn >= row_boundary.start_row
+		ORDER BY subquery.rn ASC
+		LIMIT CASE WHEN $5 = 0 THEN NULL ELSE $5 END
 	`
 
 	engine := p.manager.GetQueryEngine(ctx)
 
 	var rows []*pgxPvzOrder
 
-	err = pgxscan.Select(ctx, engine, &rows, query, userID, opts.PVZID, opts.Limit)
+	err = pgxscan.Select(ctx, engine, &rows, query, userID, opts.PVZID, opts.LastNOrders, opts.CursorID, opts.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +166,7 @@ func (p *PostgresRepository) GetOrder(ctx context.Context, orderID string) (doma
 	const query = `
 		SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
 		FROM pvz_orders
-		WHERE order_id = $1
+		WHERE order_id = $1 AND deleted_at IS NULL
 	`
 
 	engine := p.manager.GetQueryEngine(ctx)
