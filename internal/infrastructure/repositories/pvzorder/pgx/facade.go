@@ -47,13 +47,37 @@ func (p *PvzOrderFacade) SetOrderReturned(ctx context.Context, orderID string) e
 }
 
 func (p *PvzOrderFacade) GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
-	return p.repo.GetOrders(ctx, userID, options...)
+	var result []domain.PVZOrder
+	var err error
+	err = p.manager.RunSerializableTransaction(ctx, func(ctx context.Context) error {
+		var innerErr error
+		result, innerErr = p.repo.GetOrders(ctx, userID, options...)
+		return innerErr
+	})
+
+	return result, err
 }
 
 func (p *PvzOrderFacade) GetOrder(ctx context.Context, orderID string) (domain.PVZOrder, error) {
-	return p.repo.GetOrder(ctx, orderID)
+	var result domain.PVZOrder
+	var err error
+	err = p.manager.RunSerializableTransaction(ctx, func(ctx context.Context) error {
+		var innerErr error
+		result, innerErr = p.repo.GetOrder(ctx, orderID)
+		return innerErr
+	})
+
+	return result, err
 }
 
 func (p *PvzOrderFacade) GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
-	return p.repo.GetReturns(ctx, options...)
+	var result []domain.PVZOrder
+	var err error
+	err = p.manager.RunSerializableTransaction(ctx, func(ctx context.Context) error {
+		var innerErr error
+		result, innerErr = p.repo.GetReturns(ctx, options...)
+		return innerErr
+	})
+
+	return result, err
 }
