@@ -3,6 +3,7 @@ module homework
 go 1.22.1
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/georgysavva/scany/v2 v2.1.3
