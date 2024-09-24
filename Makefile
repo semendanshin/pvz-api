@@ -54,3 +54,13 @@ goose-add:
 
 goose-up:
 	@goose -dir ./migrations postgres ${url} up
+
+goose-down:
+	@goose -dir ./migrations postgres ${url} down
+
+squawk-install:
+	@npm install -g squawk-cli
+
+squawk-lint:
+	@echo "Running squawk linting..."
+	@squawk -c .squawk.toml migrations/*.sql

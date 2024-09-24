@@ -13,17 +13,17 @@ CREATE TABLE IF NOT EXISTS pvz_orders
     packaging       VARCHAR(255) NOT NULL,
     additional_film BOOLEAN      NOT NULL DEFAULT FALSE,
 
-    received_at     TIMESTAMP    NOT NULL,
+    received_at     timestamptz  NOT NULL,
     storage_time    INTERVAL     NOT NULL,
 
-    issued_at       TIMESTAMP,
-    returned_at     TIMESTAMP,
-    deleted_at      TIMESTAMP
+    issued_at       timestamptz,
+    returned_at     timestamptz,
+    deleted_at      timestamptz
 );
 
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE pvz_orders;
+DROP TABLE IF EXISTS pvz_orders;
 -- +goose StatementEnd

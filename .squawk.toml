@@ -1,0 +1,6 @@
+excluded_rules = [
+    "ban-drop-table",
+    "prefer-text-field",
+    "prefer-big-int",
+    "prefer-bigint-over-int",
+]
