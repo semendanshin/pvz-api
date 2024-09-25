@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"log"
 	"os"
 
@@ -11,21 +10,38 @@ import (
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"
+	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"homework/internal/usecases"
 	"homework/internal/usecases/packager"
 	"homework/internal/usecases/packager/strategies"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
+func loadPostgresURL() string {
+	postgresHost := os.Getenv("POSTGRES_HOST")
+	postgresPort := os.Getenv("POSTGRES_PORT")
+	postgresUsername := os.Getenv("POSTGRES_USERNAME")
+	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
+	postgresDatabase := os.Getenv("POSTGRES_DATABASE")
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDatabase)
+}
+
 func Run() error {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+	}
+
 	// Можно получить значение через стандартный пакет flag, но тогда это не будет отображаться в help
 	// pvzID := flag.String("pvz", "1", "pvz id")
 
 	pvzID := "1"
 
 	// Наверное не очень круто будет передавать это через флаг. Я подумаю в сторону переменных окружения и .env файла
-	postgresURL := "host=localhost port=5430 user=test password=test dbname=test sslmode=disable"
+	postgresURL := loadPostgresURL()
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
