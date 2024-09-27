@@ -14,6 +14,70 @@ import (
 
 var _ usecases.PVZOrderRepository = &PostgresRepository{}
 
+/*
+1. idx_pvz_order_recipient_id:
+   Этот индекс ускорит запросы, где происходит фильтрация по получателю (`recipient_id`). Пример из твоего запроса:
+
+   SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
+   FROM pvz_orders
+   WHERE recipient_id = $1
+     AND (pvz_id = $2 OR $2 = '')
+     AND deleted_at IS NULL
+   ORDER BY received_at DESC;
+
+   В данном запросе используется фильтрация по `recipient_id`, и индекс на этой колонке позволит ускорить выполнение запроса.
+
+2. idx_pvz_order_pvz_id:
+   Индекс на `pvz_id` ускорит запросы, где происходит фильтрация по ПВЗ. Пример:
+
+   SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
+   FROM pvz_orders
+   WHERE recipient_id = $1
+     AND (pvz_id = $2 OR $2 = '')
+     AND deleted_at IS NULL
+   ORDER BY received_at DESC;
+
+   В этом запросе колонка `pvz_id` используется для фильтрации, и индекс позволит базе данных быстро находить заказы, относящиеся к определённому пункту выдачи.
+
+3. idx_pvz_order_returned_at`
+   Этот индекс ускорит сортировку по дате возврата, особенно полезно для запросов, где выводятся только возвращённые заказы. Пример:
+
+   SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
+   FROM pvz_orders
+   WHERE returned_at IS NOT NULL
+     AND deleted_at IS NULL
+   ORDER BY returned_at DESC
+   LIMIT $1 OFFSET $2;
+
+   Здесь используется сортировка по `returned_at`, и индекс на этой колонке позволит базе данных быстрее сортировать результаты.
+
+4. idx_pvz_order_received_at:
+   Индекс на `received_at` будет полезен в запросах, где требуется сортировка по дате получения заказа. Пример:
+
+   WITH subquery AS (
+       SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at,
+              ROW_NUMBER() OVER (ORDER BY received_at DESC) AS rn
+       FROM pvz_orders
+       WHERE recipient_id = $1
+         AND (pvz_id = $2 OR $2 = '')
+         AND deleted_at IS NULL
+       ORDER BY received_at DESC
+       LIMIT CASE WHEN $3 = 0 THEN NULL ELSE $3 END
+   )
+
+   Здесь сортировка выполняется по `received_at`, и индекс поможет ускорить её выполнение.
+
+5. idx_pvz_order_deleted_at_not_deleted:
+   Частичный индекс на колонки, где `deleted_at IS NULL`, ускорит запросы, которые работают только с неудалёнными записями. Пример:
+
+   SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
+   FROM pvz_orders
+   WHERE order_id = $1
+     AND deleted_at IS NULL;
+
+   Так как в этом запросе проверяется условие `deleted_at IS NULL`, частичный индекс на эту колонку ускорит поиск активных заказов.
+*/
+
 type PostgresRepository struct {
 	manager *txmanager.PGXTXManager
 }
