@@ -192,20 +192,13 @@ func (p *PostgresRepository) GetOrders(ctx context.Context, userID string, optio
 			  AND deleted_at IS NULL
 			ORDER BY received_at DESC
 			LIMIT CASE WHEN $3 = 0 THEN NULL ELSE $3 END
-		), firstRowN AS (
-			SELECT rn 
-			FROM subquery 
-			WHERE order_id = $4 OR $4 = ''
-			ORDER BY rn ASC
-			LIMIT 1
 		), row_boundary AS (
-			SELECT COALESCE((SELECT rn FROM firstRowN), 1) AS start_row
+			SELECT COALESCE((SELECT rn FROM subquery WHERE order_id = $4 OR $4 = '' LIMIT 1), 1) AS start_row
 		)
 		SELECT order_id, pvz_id, recipient_id, cost, weight, packaging, additional_film, received_at, storage_time, issued_at, returned_at, deleted_at
 		FROM subquery, row_boundary
 		WHERE subquery.rn >= row_boundary.start_row
-		ORDER BY subquery.rn ASC
-		LIMIT CASE WHEN $5 = 0 THEN NULL ELSE $5 END
+		LIMIT CASE WHEN $5 = 0 THEN NULL ELSE $5 END;
 	`
 
 	engine := p.manager.GetQueryEngine(ctx)

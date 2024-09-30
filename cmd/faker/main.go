@@ -37,7 +37,6 @@ func main() {
 		fmt.Println("Error loading .env file")
 	}
 
-	// Наверное не очень круто будет передавать это через флаг. Я подумаю в сторону переменных окружения и .env файла
 	postgresURL := loadPostgresURL()
 
 	ctx := context.Background()
