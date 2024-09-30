@@ -21,9 +21,6 @@ func rootCMD(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 		},
 	}
 
-	command.PersistentFlags().StringP("orders", "o", "orders.json", "orders file")
-	command.PersistentFlags().StringP("pvz", "p", "1", "pvz id")
-
 	return command
 }
 

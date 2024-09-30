@@ -35,12 +35,11 @@ func Run() error {
 		fmt.Println("Error loading .env file")
 	}
 
-	// Можно получить значение через стандартный пакет flag, но тогда это не будет отображаться в help
-	// pvzID := flag.String("pvz", "1", "pvz id")
+	pvzID := os.Getenv("PVZ_ID")
+	if pvzID == "" {
+		return fmt.Errorf("PVZ_ID must be set")
+	}
 
-	pvzID := "1"
-
-	// Наверное не очень круто будет передавать это через флаг. Я подумаю в сторону переменных окружения и .env файла
 	postgresURL := loadPostgresURL()
 
 	ctx := context.Background()
