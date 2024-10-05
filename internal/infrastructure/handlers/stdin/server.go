@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -14,7 +15,8 @@ type HandlerFunc func(ctx context.Context, args []string) (string, error)
 type Command string
 
 const (
-	HelpCommand Command = "help"
+	HelpCommand  Command = "help"
+	WorkersCount Command = "workers-count"
 )
 
 func NewCommand(name string) Command {
@@ -22,10 +24,16 @@ func NewCommand(name string) Command {
 }
 
 type Server struct {
-	running      bool
-	done         chan struct{}
-	handlers     map[Command]HandlerFunc
-	numOfWorkers int
+	running bool
+	done    chan struct{}
+
+	handlers map[Command]HandlerFunc
+
+	inputChan  chan string
+	outputChan chan string
+
+	numOfWorkers      int
+	workersCancelFunc []context.CancelFunc
 
 	mu sync.RWMutex
 }
@@ -36,35 +44,72 @@ func NewServer(numOfWorkers int) *Server {
 	}
 
 	return &Server{
-		done:         make(chan struct{}),
-		handlers:     make(map[Command]HandlerFunc),
+		done: make(chan struct{}),
+
+		handlers: make(map[Command]HandlerFunc),
+
 		numOfWorkers: numOfWorkers,
+
+		inputChan:  make(chan string, 10),
+		outputChan: make(chan string),
 	}
 }
 
 func (s *Server) Run(ctx context.Context) error {
 	s.AddHandler(HelpCommand, s.helpHandler)
+	s.AddHandler(WorkersCount, s.setWorkersCountHandler)
 
 	s.running = true
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	input := make(chan string, s.numOfWorkers)
-	output := make(chan string)
-
-	s.runInput(ctx, input)
-	s.runOutput(ctx, output)
+	s.runInput(ctx, s.inputChan)
+	s.runOutput(ctx, s.outputChan)
 
 	for i := 0; i < s.numOfWorkers; i++ {
-		s.runDispatch(ctx, input, output)
+		s.startWorker(ctx, s.inputChan, s.outputChan)
 	}
 
-	output <- "Welcome to the CLI. Type 'help' to see available commands."
+	s.outputChan <- "Welcome to the CLI. Type 'help' to see available commands."
 
 	<-s.done
 
+	s.stopWorkers()
+
 	return nil
+}
+
+func (s *Server) startWorker(ctx context.Context, input chan string, output chan string) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	s.runDispatch(ctx, input, output)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.workersCancelFunc = append(s.workersCancelFunc, cancel)
+}
+
+func (s *Server) stopWorker() {
+	if len(s.workersCancelFunc) == 0 {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	cancel := s.workersCancelFunc[len(s.workersCancelFunc)-1]
+	go cancel()
+
+	s.workersCancelFunc = s.workersCancelFunc[:len(s.workersCancelFunc)-1]
+
+	return
+}
+
+func (s *Server) stopWorkers() {
+	for _, cancel := range s.workersCancelFunc {
+		cancel()
+	}
 }
 
 func (s *Server) Stop() {
@@ -86,14 +131,14 @@ func (s *Server) runOutput(ctx context.Context, input chan string) {
 	}()
 }
 
-func (s *Server) runInput(ctx context.Context, intake chan string) {
+func (s *Server) runInput(ctx context.Context, input chan string) {
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 
 		for {
 			select {
 			case <-ctx.Done():
-				close(intake)
+				close(input)
 				return
 			default:
 				msg, err := reader.ReadString('\n')
@@ -104,7 +149,7 @@ func (s *Server) runInput(ctx context.Context, intake chan string) {
 
 				msg = strings.TrimSpace(msg)
 
-				intake <- msg
+				input <- msg
 			}
 		}
 	}()
@@ -117,9 +162,7 @@ func (s *Server) runDispatch(ctx context.Context, input chan string, output chan
 			case <-ctx.Done():
 				return
 			case msg := <-input:
-				go func() {
-					output <- s.handleInput(ctx, msg)
-				}()
+				output <- s.handleInput(ctx, msg)
 			}
 		}
 	}()
@@ -176,4 +219,39 @@ func (s *Server) helpHandler(ctx context.Context, args []string) (string, error)
 	}
 
 	return fmt.Sprintf("Available commands: %v", commands), nil
+}
+
+func (s *Server) setWorkersCountHandler(ctx context.Context, args []string) (string, error) {
+	usage := "Usage: workers-count <count>"
+
+	if len(args) == 0 {
+		return "", fmt.Errorf("no arguments provided. %s", usage)
+	}
+
+	workersCountStr := args[0]
+
+	workersCount, err := strconv.Atoi(workersCountStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse workers count: %w", err)
+	}
+
+	if workersCount < 1 {
+		return "", fmt.Errorf("workers count should be greater than 0")
+	}
+
+	diff := s.numOfWorkers - workersCount
+
+	if diff > 0 {
+		for i := 0; i < diff; i++ {
+			s.stopWorker()
+		}
+	} else {
+		for i := 0; i < -diff; i++ {
+			s.startWorker(ctx, s.inputChan, s.outputChan)
+		}
+	}
+
+	s.numOfWorkers = workersCount
+
+	return fmt.Sprintf("workers count set to %d", workersCount), nil
 }
