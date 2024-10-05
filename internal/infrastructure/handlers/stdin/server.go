@@ -29,8 +29,7 @@ type Server struct {
 
 	handlers map[Command]HandlerFunc
 
-	inputChan  chan string
-	outputChan chan string
+	inputChan chan string
 
 	numOfWorkers      int
 	workersCancelFunc []context.CancelFunc
@@ -50,8 +49,7 @@ func NewServer(numOfWorkers int) *Server {
 
 		numOfWorkers: numOfWorkers,
 
-		inputChan:  make(chan string, 10),
-		outputChan: make(chan string),
+		inputChan: make(chan string, 10),
 	}
 }
 
@@ -65,13 +63,12 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	s.runInput(ctx, s.inputChan)
-	s.runOutput(ctx, s.outputChan)
 
 	for i := 0; i < s.numOfWorkers; i++ {
-		s.startWorker(ctx, s.inputChan, s.outputChan)
+		s.startWorker(ctx, s.inputChan)
 	}
 
-	s.outputChan <- "Welcome to the CLI. Type 'help' to see available commands."
+	fmt.Println("Welcome to the CLI. Type 'help' to see available commands.")
 
 	<-s.done
 
@@ -80,10 +77,10 @@ func (s *Server) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) startWorker(ctx context.Context, input chan string, output chan string) {
+func (s *Server) startWorker(ctx context.Context, input chan string) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	s.runDispatch(ctx, input, output)
+	s.runDispatch(ctx, input)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -117,20 +114,6 @@ func (s *Server) Stop() {
 	close(s.done)
 }
 
-func (s *Server) runOutput(ctx context.Context, input chan string) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case msg := <-input:
-				fmt.Println("> " + msg)
-				fmt.Println()
-			}
-		}
-	}()
-}
-
 func (s *Server) runInput(ctx context.Context, input chan string) {
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
@@ -155,14 +138,14 @@ func (s *Server) runInput(ctx context.Context, input chan string) {
 	}()
 }
 
-func (s *Server) runDispatch(ctx context.Context, input chan string, output chan string) {
+func (s *Server) runDispatch(ctx context.Context, input chan string) {
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case msg := <-input:
-				output <- s.handleInput(ctx, msg)
+				fmt.Println("> " + s.handleInput(ctx, msg))
 			}
 		}
 	}()
@@ -247,7 +230,7 @@ func (s *Server) setWorkersCountHandler(ctx context.Context, args []string) (str
 		}
 	} else {
 		for i := 0; i < -diff; i++ {
-			s.startWorker(ctx, s.inputChan, s.outputChan)
+			s.startWorker(ctx, s.inputChan)
 		}
 	}
 
