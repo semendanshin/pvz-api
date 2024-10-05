@@ -4,7 +4,10 @@ import (
 	"context"
 	"github.com/spf13/cobra"
 	"homework/internal/abstractions"
-	"homework/internal/infrastructure/handlers/bubbletea"
+	"homework/internal/infrastructure/handlers/stdin"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func rootCMD(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
@@ -12,7 +15,17 @@ func rootCMD(pvzOrderUseCase abstractions.IPVZOrderUseCase) *cobra.Command {
 		Use:   "hw1",
 		Short: "Homework 1",
 		Run: func(cmd *cobra.Command, args []string) {
-			handler := bubbletea.NewHandler(pvzOrderUseCase)
+			handler := stdin.NewHandler(pvzOrderUseCase, 8)
+
+			go func() {
+				stop := make(chan os.Signal, 1)
+				signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+				<-stop
+
+				cmd.Println("Stopping gracefully...")
+				handler.Stop()
+			}()
 
 			err := handler.Run(cmd.Context())
 			if err != nil {

@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"homework/cmd/hw1/cmds"
+	"homework/cmd/cli/cmds"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"

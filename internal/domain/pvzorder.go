@@ -28,7 +28,7 @@ func NewPackagingType(p string) (PackagingType, error) {
 		return PackagingTypeFilm, nil
 	default:
 		return PackagingTypeUnknown, fmt.Errorf(
-			"unknown packaging type (available types: box, bag, film): %s", ErrInvalidArgument,
+			"unknown packaging type %s (available types: box, bag, film): %w", p, ErrInvalidArgument,
 		)
 	}
 }
