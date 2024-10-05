@@ -1,6 +1,8 @@
 COGNIT_THRESHOLD = 5
 CYCLO_THRESHOLD = 5
 
+DATABASE_COMPOSE_FILE = database/db-compose.yaml
+
 cognitive-lint:
 	@echo "Running cognitive complexity linting..."
 	@gocognit -over $(COGNIT_THRESHOLD) internal
@@ -39,3 +41,26 @@ install-deps:
 coverage:
 	@echo "Running test coverage..."
 	@go test -coverprofile /dev/null ./internal/usecases ./internal/usecases/packager
+
+run-db:
+	@echo "Running the database..."
+	@docker compose -f $(DATABASE_COMPOSE_FILE) up -d
+
+goose-install:
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+
+goose-add:
+	@goose -dir ./migrations -s create rename_me sql
+
+goose-up:
+	@goose -dir ./migrations postgres ${url} up
+
+goose-down:
+	@goose -dir ./migrations postgres ${url} down
+
+squawk-install:
+	@npm install -g squawk-cli
+
+squawk-lint:
+	@echo "Running squawk linting..."
+	@squawk -c .squawk.toml migrations/*.sql

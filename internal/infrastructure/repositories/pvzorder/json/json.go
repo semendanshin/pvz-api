@@ -1,6 +1,7 @@
-package pvzorder
+package json
 
 import (
+	"context"
 	"encoding/json"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
@@ -138,7 +139,7 @@ func NewJSONRepository(pathToFile string) *JSONRepository {
 }
 
 // CreateOrder creates a new order
-func (J *JSONRepository) CreateOrder(order domain.PVZOrder) error {
+func (J *JSONRepository) CreateOrder(_ context.Context, order domain.PVZOrder) error {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return err
@@ -152,7 +153,7 @@ func (J *JSONRepository) CreateOrder(order domain.PVZOrder) error {
 }
 
 // DeleteOrder deletes an order
-func (J *JSONRepository) DeleteOrder(orderID string) error {
+func (J *JSONRepository) DeleteOrder(_ context.Context, orderID string) error {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return err
@@ -171,7 +172,7 @@ func (J *JSONRepository) DeleteOrder(orderID string) error {
 }
 
 // SetOrderIssued sets the order as issued
-func (J *JSONRepository) SetOrderIssued(orderID string) error {
+func (J *JSONRepository) SetOrderIssued(_ context.Context, orderID string) error {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return err
@@ -190,7 +191,7 @@ func (J *JSONRepository) SetOrderIssued(orderID string) error {
 }
 
 // SetOrderReturned sets the order as returned
-func (J *JSONRepository) SetOrderReturned(orderID string) error {
+func (J *JSONRepository) SetOrderReturned(_ context.Context, orderID string) error {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return err
@@ -225,7 +226,7 @@ func getOrders(fileStruct fileStruct, userID string, options abstractions.GetOrd
 }
 
 // GetOrders gets orders
-func (J *JSONRepository) GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
+func (J *JSONRepository) GetOrders(_ context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return nil, err
@@ -279,7 +280,7 @@ func applyLimitFilter(orders []domain.PVZOrder, limit int) []domain.PVZOrder {
 }
 
 // GetOrder gets an order
-func (J *JSONRepository) GetOrder(orderID string) (domain.PVZOrder, error) {
+func (J *JSONRepository) GetOrder(_ context.Context, orderID string) (domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return domain.PVZOrder{}, err
@@ -306,7 +307,7 @@ func getReturns(fileStruct fileStruct) []domain.PVZOrder {
 }
 
 // GetReturns gets returns
-func (J *JSONRepository) GetReturns(options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
+func (J *JSONRepository) GetReturns(_ context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
 	fileStruct, err := readFile(J.pathToFile)
 	if err != nil {
 		return nil, err

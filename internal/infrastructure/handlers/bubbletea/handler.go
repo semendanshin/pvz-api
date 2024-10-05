@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	tea "github.com/charmbracelet/bubbletea"
 	"homework/internal/abstractions"
 )
@@ -18,7 +19,7 @@ func NewHandler(useCase abstractions.IPVZOrderUseCase) *Handler {
 }
 
 // Run runs the handler
-func (h *Handler) Run() error {
+func (h *Handler) Run(ctx context.Context) error {
 	models := make([]MyModel, 0)
 
 	acceptOrderModel := newAcceptOrderModel(h.useCase)
@@ -60,6 +61,9 @@ func (h *Handler) Run() error {
 	p := tea.NewProgram(
 		NewEntryPointModel(models),
 		tea.WithMouseCellMotion(),
+		// К сожалению, данный контекст используется только для остановки всего баблти приложения
+		// В библиотеке не предусмотрена возможность использования этого контекста внутри моделей
+		tea.WithContext(ctx),
 	)
 	if _, err := p.Run(); err != nil {
 		return err

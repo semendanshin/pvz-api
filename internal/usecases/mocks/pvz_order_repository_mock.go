@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"sync"
@@ -17,51 +18,51 @@ type PVZOrderRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
-	funcCreateOrder          func(order domain.PVZOrder) (err error)
+	funcCreateOrder          func(ctx context.Context, order domain.PVZOrder) (err error)
 	funcCreateOrderOrigin    string
-	inspectFuncCreateOrder   func(order domain.PVZOrder)
+	inspectFuncCreateOrder   func(ctx context.Context, order domain.PVZOrder)
 	afterCreateOrderCounter  uint64
 	beforeCreateOrderCounter uint64
 	CreateOrderMock          mPVZOrderRepositoryMockCreateOrder
 
-	funcDeleteOrder          func(orderID string) (err error)
+	funcDeleteOrder          func(ctx context.Context, orderID string) (err error)
 	funcDeleteOrderOrigin    string
-	inspectFuncDeleteOrder   func(orderID string)
+	inspectFuncDeleteOrder   func(ctx context.Context, orderID string)
 	afterDeleteOrderCounter  uint64
 	beforeDeleteOrderCounter uint64
 	DeleteOrderMock          mPVZOrderRepositoryMockDeleteOrder
 
-	funcGetOrder          func(orderID string) (p1 domain.PVZOrder, err error)
+	funcGetOrder          func(ctx context.Context, orderID string) (p1 domain.PVZOrder, err error)
 	funcGetOrderOrigin    string
-	inspectFuncGetOrder   func(orderID string)
+	inspectFuncGetOrder   func(ctx context.Context, orderID string)
 	afterGetOrderCounter  uint64
 	beforeGetOrderCounter uint64
 	GetOrderMock          mPVZOrderRepositoryMockGetOrder
 
-	funcGetOrders          func(userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error)
+	funcGetOrders          func(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error)
 	funcGetOrdersOrigin    string
-	inspectFuncGetOrders   func(userID string, options ...abstractions.GetOrdersOptFunc)
+	inspectFuncGetOrders   func(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc)
 	afterGetOrdersCounter  uint64
 	beforeGetOrdersCounter uint64
 	GetOrdersMock          mPVZOrderRepositoryMockGetOrders
 
-	funcGetReturns          func(options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error)
+	funcGetReturns          func(ctx context.Context, options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error)
 	funcGetReturnsOrigin    string
-	inspectFuncGetReturns   func(options ...abstractions.PagePaginationOptFunc)
+	inspectFuncGetReturns   func(ctx context.Context, options ...abstractions.PagePaginationOptFunc)
 	afterGetReturnsCounter  uint64
 	beforeGetReturnsCounter uint64
 	GetReturnsMock          mPVZOrderRepositoryMockGetReturns
 
-	funcSetOrderIssued          func(orderID string) (err error)
+	funcSetOrderIssued          func(ctx context.Context, orderID string) (err error)
 	funcSetOrderIssuedOrigin    string
-	inspectFuncSetOrderIssued   func(orderID string)
+	inspectFuncSetOrderIssued   func(ctx context.Context, orderID string)
 	afterSetOrderIssuedCounter  uint64
 	beforeSetOrderIssuedCounter uint64
 	SetOrderIssuedMock          mPVZOrderRepositoryMockSetOrderIssued
 
-	funcSetOrderReturned          func(orderID string) (err error)
+	funcSetOrderReturned          func(ctx context.Context, orderID string) (err error)
 	funcSetOrderReturnedOrigin    string
-	inspectFuncSetOrderReturned   func(orderID string)
+	inspectFuncSetOrderReturned   func(ctx context.Context, orderID string)
 	afterSetOrderReturnedCounter  uint64
 	beforeSetOrderReturnedCounter uint64
 	SetOrderReturnedMock          mPVZOrderRepositoryMockSetOrderReturned
@@ -127,11 +128,13 @@ type PVZOrderRepositoryMockCreateOrderExpectation struct {
 
 // PVZOrderRepositoryMockCreateOrderParams contains parameters of the PVZOrderRepository.CreateOrder
 type PVZOrderRepositoryMockCreateOrderParams struct {
+	ctx   context.Context
 	order domain.PVZOrder
 }
 
 // PVZOrderRepositoryMockCreateOrderParamPtrs contains pointers to parameters of the PVZOrderRepository.CreateOrder
 type PVZOrderRepositoryMockCreateOrderParamPtrs struct {
+	ctx   *context.Context
 	order *domain.PVZOrder
 }
 
@@ -143,6 +146,7 @@ type PVZOrderRepositoryMockCreateOrderResults struct {
 // PVZOrderRepositoryMockCreateOrderOrigins contains origins of expectations of the PVZOrderRepository.CreateOrder
 type PVZOrderRepositoryMockCreateOrderExpectationOrigins struct {
 	origin      string
+	originCtx   string
 	originOrder string
 }
 
@@ -157,7 +161,7 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Optional() *mPVZOrderRe
 }
 
 // Expect sets up expected params for PVZOrderRepository.CreateOrder
-func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Expect(order domain.PVZOrder) *mPVZOrderRepositoryMockCreateOrder {
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Expect(ctx context.Context, order domain.PVZOrder) *mPVZOrderRepositoryMockCreateOrder {
 	if mmCreateOrder.mock.funcCreateOrder != nil {
 		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by Set")
 	}
@@ -170,7 +174,7 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Expect(order domain.PVZ
 		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by ExpectParams functions")
 	}
 
-	mmCreateOrder.defaultExpectation.params = &PVZOrderRepositoryMockCreateOrderParams{order}
+	mmCreateOrder.defaultExpectation.params = &PVZOrderRepositoryMockCreateOrderParams{ctx, order}
 	mmCreateOrder.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmCreateOrder.expectations {
 		if minimock.Equal(e.params, mmCreateOrder.defaultExpectation.params) {
@@ -181,8 +185,31 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Expect(order domain.PVZ
 	return mmCreateOrder
 }
 
-// ExpectOrderParam1 sets up expected param order for PVZOrderRepository.CreateOrder
-func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) ExpectOrderParam1(order domain.PVZOrder) *mPVZOrderRepositoryMockCreateOrder {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.CreateOrder
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockCreateOrder {
+	if mmCreateOrder.mock.funcCreateOrder != nil {
+		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by Set")
+	}
+
+	if mmCreateOrder.defaultExpectation == nil {
+		mmCreateOrder.defaultExpectation = &PVZOrderRepositoryMockCreateOrderExpectation{}
+	}
+
+	if mmCreateOrder.defaultExpectation.params != nil {
+		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by Expect")
+	}
+
+	if mmCreateOrder.defaultExpectation.paramPtrs == nil {
+		mmCreateOrder.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockCreateOrderParamPtrs{}
+	}
+	mmCreateOrder.defaultExpectation.paramPtrs.ctx = &ctx
+	mmCreateOrder.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmCreateOrder
+}
+
+// ExpectOrderParam2 sets up expected param order for PVZOrderRepository.CreateOrder
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) ExpectOrderParam2(order domain.PVZOrder) *mPVZOrderRepositoryMockCreateOrder {
 	if mmCreateOrder.mock.funcCreateOrder != nil {
 		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by Set")
 	}
@@ -205,7 +232,7 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) ExpectOrderParam1(order
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.CreateOrder
-func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Inspect(f func(order domain.PVZOrder)) *mPVZOrderRepositoryMockCreateOrder {
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Inspect(f func(ctx context.Context, order domain.PVZOrder)) *mPVZOrderRepositoryMockCreateOrder {
 	if mmCreateOrder.mock.inspectFuncCreateOrder != nil {
 		mmCreateOrder.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.CreateOrder")
 	}
@@ -230,7 +257,7 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Return(err error) *PVZO
 }
 
 // Set uses given function f to mock the PVZOrderRepository.CreateOrder method
-func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Set(f func(order domain.PVZOrder) (err error)) *PVZOrderRepositoryMock {
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Set(f func(ctx context.Context, order domain.PVZOrder) (err error)) *PVZOrderRepositoryMock {
 	if mmCreateOrder.defaultExpectation != nil {
 		mmCreateOrder.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.CreateOrder method")
 	}
@@ -246,14 +273,14 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) Set(f func(order domain
 
 // When sets expectation for the PVZOrderRepository.CreateOrder which will trigger the result defined by the following
 // Then helper
-func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) When(order domain.PVZOrder) *PVZOrderRepositoryMockCreateOrderExpectation {
+func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) When(ctx context.Context, order domain.PVZOrder) *PVZOrderRepositoryMockCreateOrderExpectation {
 	if mmCreateOrder.mock.funcCreateOrder != nil {
 		mmCreateOrder.mock.t.Fatalf("PVZOrderRepositoryMock.CreateOrder mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockCreateOrderExpectation{
 		mock:               mmCreateOrder.mock,
-		params:             &PVZOrderRepositoryMockCreateOrderParams{order},
+		params:             &PVZOrderRepositoryMockCreateOrderParams{ctx, order},
 		expectationOrigins: PVZOrderRepositoryMockCreateOrderExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmCreateOrder.expectations = append(mmCreateOrder.expectations, expectation)
@@ -288,17 +315,17 @@ func (mmCreateOrder *mPVZOrderRepositoryMockCreateOrder) invocationsDone() bool 
 }
 
 // CreateOrder implements mm_usecases.PVZOrderRepository
-func (mmCreateOrder *PVZOrderRepositoryMock) CreateOrder(order domain.PVZOrder) (err error) {
+func (mmCreateOrder *PVZOrderRepositoryMock) CreateOrder(ctx context.Context, order domain.PVZOrder) (err error) {
 	mm_atomic.AddUint64(&mmCreateOrder.beforeCreateOrderCounter, 1)
 	defer mm_atomic.AddUint64(&mmCreateOrder.afterCreateOrderCounter, 1)
 
 	mmCreateOrder.t.Helper()
 
 	if mmCreateOrder.inspectFuncCreateOrder != nil {
-		mmCreateOrder.inspectFuncCreateOrder(order)
+		mmCreateOrder.inspectFuncCreateOrder(ctx, order)
 	}
 
-	mm_params := PVZOrderRepositoryMockCreateOrderParams{order}
+	mm_params := PVZOrderRepositoryMockCreateOrderParams{ctx, order}
 
 	// Record call args
 	mmCreateOrder.CreateOrderMock.mutex.Lock()
@@ -317,9 +344,14 @@ func (mmCreateOrder *PVZOrderRepositoryMock) CreateOrder(order domain.PVZOrder) 
 		mm_want := mmCreateOrder.CreateOrderMock.defaultExpectation.params
 		mm_want_ptrs := mmCreateOrder.CreateOrderMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockCreateOrderParams{order}
+		mm_got := PVZOrderRepositoryMockCreateOrderParams{ctx, order}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmCreateOrder.t.Errorf("PVZOrderRepositoryMock.CreateOrder got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCreateOrder.CreateOrderMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.order != nil && !minimock.Equal(*mm_want_ptrs.order, mm_got.order) {
 				mmCreateOrder.t.Errorf("PVZOrderRepositoryMock.CreateOrder got unexpected parameter order, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -338,9 +370,9 @@ func (mmCreateOrder *PVZOrderRepositoryMock) CreateOrder(order domain.PVZOrder) 
 		return (*mm_results).err
 	}
 	if mmCreateOrder.funcCreateOrder != nil {
-		return mmCreateOrder.funcCreateOrder(order)
+		return mmCreateOrder.funcCreateOrder(ctx, order)
 	}
-	mmCreateOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.CreateOrder. %v", order)
+	mmCreateOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.CreateOrder. %v %v", ctx, order)
 	return
 }
 
@@ -438,11 +470,13 @@ type PVZOrderRepositoryMockDeleteOrderExpectation struct {
 
 // PVZOrderRepositoryMockDeleteOrderParams contains parameters of the PVZOrderRepository.DeleteOrder
 type PVZOrderRepositoryMockDeleteOrderParams struct {
+	ctx     context.Context
 	orderID string
 }
 
 // PVZOrderRepositoryMockDeleteOrderParamPtrs contains pointers to parameters of the PVZOrderRepository.DeleteOrder
 type PVZOrderRepositoryMockDeleteOrderParamPtrs struct {
+	ctx     *context.Context
 	orderID *string
 }
 
@@ -454,6 +488,7 @@ type PVZOrderRepositoryMockDeleteOrderResults struct {
 // PVZOrderRepositoryMockDeleteOrderOrigins contains origins of expectations of the PVZOrderRepository.DeleteOrder
 type PVZOrderRepositoryMockDeleteOrderExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originOrderID string
 }
 
@@ -468,7 +503,7 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Optional() *mPVZOrderRe
 }
 
 // Expect sets up expected params for PVZOrderRepository.DeleteOrder
-func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Expect(orderID string) *mPVZOrderRepositoryMockDeleteOrder {
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Expect(ctx context.Context, orderID string) *mPVZOrderRepositoryMockDeleteOrder {
 	if mmDeleteOrder.mock.funcDeleteOrder != nil {
 		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by Set")
 	}
@@ -481,7 +516,7 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Expect(orderID string) 
 		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by ExpectParams functions")
 	}
 
-	mmDeleteOrder.defaultExpectation.params = &PVZOrderRepositoryMockDeleteOrderParams{orderID}
+	mmDeleteOrder.defaultExpectation.params = &PVZOrderRepositoryMockDeleteOrderParams{ctx, orderID}
 	mmDeleteOrder.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmDeleteOrder.expectations {
 		if minimock.Equal(e.params, mmDeleteOrder.defaultExpectation.params) {
@@ -492,8 +527,31 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Expect(orderID string) 
 	return mmDeleteOrder
 }
 
-// ExpectOrderIDParam1 sets up expected param orderID for PVZOrderRepository.DeleteOrder
-func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) ExpectOrderIDParam1(orderID string) *mPVZOrderRepositoryMockDeleteOrder {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.DeleteOrder
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockDeleteOrder {
+	if mmDeleteOrder.mock.funcDeleteOrder != nil {
+		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by Set")
+	}
+
+	if mmDeleteOrder.defaultExpectation == nil {
+		mmDeleteOrder.defaultExpectation = &PVZOrderRepositoryMockDeleteOrderExpectation{}
+	}
+
+	if mmDeleteOrder.defaultExpectation.params != nil {
+		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by Expect")
+	}
+
+	if mmDeleteOrder.defaultExpectation.paramPtrs == nil {
+		mmDeleteOrder.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockDeleteOrderParamPtrs{}
+	}
+	mmDeleteOrder.defaultExpectation.paramPtrs.ctx = &ctx
+	mmDeleteOrder.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmDeleteOrder
+}
+
+// ExpectOrderIDParam2 sets up expected param orderID for PVZOrderRepository.DeleteOrder
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) ExpectOrderIDParam2(orderID string) *mPVZOrderRepositoryMockDeleteOrder {
 	if mmDeleteOrder.mock.funcDeleteOrder != nil {
 		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by Set")
 	}
@@ -516,7 +574,7 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) ExpectOrderIDParam1(ord
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.DeleteOrder
-func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Inspect(f func(orderID string)) *mPVZOrderRepositoryMockDeleteOrder {
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Inspect(f func(ctx context.Context, orderID string)) *mPVZOrderRepositoryMockDeleteOrder {
 	if mmDeleteOrder.mock.inspectFuncDeleteOrder != nil {
 		mmDeleteOrder.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.DeleteOrder")
 	}
@@ -541,7 +599,7 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Return(err error) *PVZO
 }
 
 // Set uses given function f to mock the PVZOrderRepository.DeleteOrder method
-func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Set(f func(orderID string) (err error)) *PVZOrderRepositoryMock {
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Set(f func(ctx context.Context, orderID string) (err error)) *PVZOrderRepositoryMock {
 	if mmDeleteOrder.defaultExpectation != nil {
 		mmDeleteOrder.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.DeleteOrder method")
 	}
@@ -557,14 +615,14 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) Set(f func(orderID stri
 
 // When sets expectation for the PVZOrderRepository.DeleteOrder which will trigger the result defined by the following
 // Then helper
-func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) When(orderID string) *PVZOrderRepositoryMockDeleteOrderExpectation {
+func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) When(ctx context.Context, orderID string) *PVZOrderRepositoryMockDeleteOrderExpectation {
 	if mmDeleteOrder.mock.funcDeleteOrder != nil {
 		mmDeleteOrder.mock.t.Fatalf("PVZOrderRepositoryMock.DeleteOrder mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockDeleteOrderExpectation{
 		mock:               mmDeleteOrder.mock,
-		params:             &PVZOrderRepositoryMockDeleteOrderParams{orderID},
+		params:             &PVZOrderRepositoryMockDeleteOrderParams{ctx, orderID},
 		expectationOrigins: PVZOrderRepositoryMockDeleteOrderExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmDeleteOrder.expectations = append(mmDeleteOrder.expectations, expectation)
@@ -599,17 +657,17 @@ func (mmDeleteOrder *mPVZOrderRepositoryMockDeleteOrder) invocationsDone() bool 
 }
 
 // DeleteOrder implements mm_usecases.PVZOrderRepository
-func (mmDeleteOrder *PVZOrderRepositoryMock) DeleteOrder(orderID string) (err error) {
+func (mmDeleteOrder *PVZOrderRepositoryMock) DeleteOrder(ctx context.Context, orderID string) (err error) {
 	mm_atomic.AddUint64(&mmDeleteOrder.beforeDeleteOrderCounter, 1)
 	defer mm_atomic.AddUint64(&mmDeleteOrder.afterDeleteOrderCounter, 1)
 
 	mmDeleteOrder.t.Helper()
 
 	if mmDeleteOrder.inspectFuncDeleteOrder != nil {
-		mmDeleteOrder.inspectFuncDeleteOrder(orderID)
+		mmDeleteOrder.inspectFuncDeleteOrder(ctx, orderID)
 	}
 
-	mm_params := PVZOrderRepositoryMockDeleteOrderParams{orderID}
+	mm_params := PVZOrderRepositoryMockDeleteOrderParams{ctx, orderID}
 
 	// Record call args
 	mmDeleteOrder.DeleteOrderMock.mutex.Lock()
@@ -628,9 +686,14 @@ func (mmDeleteOrder *PVZOrderRepositoryMock) DeleteOrder(orderID string) (err er
 		mm_want := mmDeleteOrder.DeleteOrderMock.defaultExpectation.params
 		mm_want_ptrs := mmDeleteOrder.DeleteOrderMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockDeleteOrderParams{orderID}
+		mm_got := PVZOrderRepositoryMockDeleteOrderParams{ctx, orderID}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmDeleteOrder.t.Errorf("PVZOrderRepositoryMock.DeleteOrder got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmDeleteOrder.DeleteOrderMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.orderID != nil && !minimock.Equal(*mm_want_ptrs.orderID, mm_got.orderID) {
 				mmDeleteOrder.t.Errorf("PVZOrderRepositoryMock.DeleteOrder got unexpected parameter orderID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -649,9 +712,9 @@ func (mmDeleteOrder *PVZOrderRepositoryMock) DeleteOrder(orderID string) (err er
 		return (*mm_results).err
 	}
 	if mmDeleteOrder.funcDeleteOrder != nil {
-		return mmDeleteOrder.funcDeleteOrder(orderID)
+		return mmDeleteOrder.funcDeleteOrder(ctx, orderID)
 	}
-	mmDeleteOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.DeleteOrder. %v", orderID)
+	mmDeleteOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.DeleteOrder. %v %v", ctx, orderID)
 	return
 }
 
@@ -749,11 +812,13 @@ type PVZOrderRepositoryMockGetOrderExpectation struct {
 
 // PVZOrderRepositoryMockGetOrderParams contains parameters of the PVZOrderRepository.GetOrder
 type PVZOrderRepositoryMockGetOrderParams struct {
+	ctx     context.Context
 	orderID string
 }
 
 // PVZOrderRepositoryMockGetOrderParamPtrs contains pointers to parameters of the PVZOrderRepository.GetOrder
 type PVZOrderRepositoryMockGetOrderParamPtrs struct {
+	ctx     *context.Context
 	orderID *string
 }
 
@@ -766,6 +831,7 @@ type PVZOrderRepositoryMockGetOrderResults struct {
 // PVZOrderRepositoryMockGetOrderOrigins contains origins of expectations of the PVZOrderRepository.GetOrder
 type PVZOrderRepositoryMockGetOrderExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originOrderID string
 }
 
@@ -780,7 +846,7 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Optional() *mPVZOrderReposito
 }
 
 // Expect sets up expected params for PVZOrderRepository.GetOrder
-func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Expect(orderID string) *mPVZOrderRepositoryMockGetOrder {
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Expect(ctx context.Context, orderID string) *mPVZOrderRepositoryMockGetOrder {
 	if mmGetOrder.mock.funcGetOrder != nil {
 		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by Set")
 	}
@@ -793,7 +859,7 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Expect(orderID string) *mPVZO
 		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by ExpectParams functions")
 	}
 
-	mmGetOrder.defaultExpectation.params = &PVZOrderRepositoryMockGetOrderParams{orderID}
+	mmGetOrder.defaultExpectation.params = &PVZOrderRepositoryMockGetOrderParams{ctx, orderID}
 	mmGetOrder.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmGetOrder.expectations {
 		if minimock.Equal(e.params, mmGetOrder.defaultExpectation.params) {
@@ -804,8 +870,31 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Expect(orderID string) *mPVZO
 	return mmGetOrder
 }
 
-// ExpectOrderIDParam1 sets up expected param orderID for PVZOrderRepository.GetOrder
-func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) ExpectOrderIDParam1(orderID string) *mPVZOrderRepositoryMockGetOrder {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.GetOrder
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockGetOrder {
+	if mmGetOrder.mock.funcGetOrder != nil {
+		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by Set")
+	}
+
+	if mmGetOrder.defaultExpectation == nil {
+		mmGetOrder.defaultExpectation = &PVZOrderRepositoryMockGetOrderExpectation{}
+	}
+
+	if mmGetOrder.defaultExpectation.params != nil {
+		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by Expect")
+	}
+
+	if mmGetOrder.defaultExpectation.paramPtrs == nil {
+		mmGetOrder.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockGetOrderParamPtrs{}
+	}
+	mmGetOrder.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetOrder.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetOrder
+}
+
+// ExpectOrderIDParam2 sets up expected param orderID for PVZOrderRepository.GetOrder
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) ExpectOrderIDParam2(orderID string) *mPVZOrderRepositoryMockGetOrder {
 	if mmGetOrder.mock.funcGetOrder != nil {
 		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by Set")
 	}
@@ -828,7 +917,7 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) ExpectOrderIDParam1(orderID s
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.GetOrder
-func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Inspect(f func(orderID string)) *mPVZOrderRepositoryMockGetOrder {
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Inspect(f func(ctx context.Context, orderID string)) *mPVZOrderRepositoryMockGetOrder {
 	if mmGetOrder.mock.inspectFuncGetOrder != nil {
 		mmGetOrder.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.GetOrder")
 	}
@@ -853,7 +942,7 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Return(p1 domain.PVZOrder, er
 }
 
 // Set uses given function f to mock the PVZOrderRepository.GetOrder method
-func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Set(f func(orderID string) (p1 domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Set(f func(ctx context.Context, orderID string) (p1 domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
 	if mmGetOrder.defaultExpectation != nil {
 		mmGetOrder.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.GetOrder method")
 	}
@@ -869,14 +958,14 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) Set(f func(orderID string) (p
 
 // When sets expectation for the PVZOrderRepository.GetOrder which will trigger the result defined by the following
 // Then helper
-func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) When(orderID string) *PVZOrderRepositoryMockGetOrderExpectation {
+func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) When(ctx context.Context, orderID string) *PVZOrderRepositoryMockGetOrderExpectation {
 	if mmGetOrder.mock.funcGetOrder != nil {
 		mmGetOrder.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrder mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockGetOrderExpectation{
 		mock:               mmGetOrder.mock,
-		params:             &PVZOrderRepositoryMockGetOrderParams{orderID},
+		params:             &PVZOrderRepositoryMockGetOrderParams{ctx, orderID},
 		expectationOrigins: PVZOrderRepositoryMockGetOrderExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmGetOrder.expectations = append(mmGetOrder.expectations, expectation)
@@ -911,17 +1000,17 @@ func (mmGetOrder *mPVZOrderRepositoryMockGetOrder) invocationsDone() bool {
 }
 
 // GetOrder implements mm_usecases.PVZOrderRepository
-func (mmGetOrder *PVZOrderRepositoryMock) GetOrder(orderID string) (p1 domain.PVZOrder, err error) {
+func (mmGetOrder *PVZOrderRepositoryMock) GetOrder(ctx context.Context, orderID string) (p1 domain.PVZOrder, err error) {
 	mm_atomic.AddUint64(&mmGetOrder.beforeGetOrderCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetOrder.afterGetOrderCounter, 1)
 
 	mmGetOrder.t.Helper()
 
 	if mmGetOrder.inspectFuncGetOrder != nil {
-		mmGetOrder.inspectFuncGetOrder(orderID)
+		mmGetOrder.inspectFuncGetOrder(ctx, orderID)
 	}
 
-	mm_params := PVZOrderRepositoryMockGetOrderParams{orderID}
+	mm_params := PVZOrderRepositoryMockGetOrderParams{ctx, orderID}
 
 	// Record call args
 	mmGetOrder.GetOrderMock.mutex.Lock()
@@ -940,9 +1029,14 @@ func (mmGetOrder *PVZOrderRepositoryMock) GetOrder(orderID string) (p1 domain.PV
 		mm_want := mmGetOrder.GetOrderMock.defaultExpectation.params
 		mm_want_ptrs := mmGetOrder.GetOrderMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockGetOrderParams{orderID}
+		mm_got := PVZOrderRepositoryMockGetOrderParams{ctx, orderID}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetOrder.t.Errorf("PVZOrderRepositoryMock.GetOrder got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetOrder.GetOrderMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.orderID != nil && !minimock.Equal(*mm_want_ptrs.orderID, mm_got.orderID) {
 				mmGetOrder.t.Errorf("PVZOrderRepositoryMock.GetOrder got unexpected parameter orderID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -961,9 +1055,9 @@ func (mmGetOrder *PVZOrderRepositoryMock) GetOrder(orderID string) (p1 domain.PV
 		return (*mm_results).p1, (*mm_results).err
 	}
 	if mmGetOrder.funcGetOrder != nil {
-		return mmGetOrder.funcGetOrder(orderID)
+		return mmGetOrder.funcGetOrder(ctx, orderID)
 	}
-	mmGetOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetOrder. %v", orderID)
+	mmGetOrder.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetOrder. %v %v", ctx, orderID)
 	return
 }
 
@@ -1061,12 +1155,14 @@ type PVZOrderRepositoryMockGetOrdersExpectation struct {
 
 // PVZOrderRepositoryMockGetOrdersParams contains parameters of the PVZOrderRepository.GetOrders
 type PVZOrderRepositoryMockGetOrdersParams struct {
+	ctx     context.Context
 	userID  string
 	options []abstractions.GetOrdersOptFunc
 }
 
 // PVZOrderRepositoryMockGetOrdersParamPtrs contains pointers to parameters of the PVZOrderRepository.GetOrders
 type PVZOrderRepositoryMockGetOrdersParamPtrs struct {
+	ctx     *context.Context
 	userID  *string
 	options *[]abstractions.GetOrdersOptFunc
 }
@@ -1080,6 +1176,7 @@ type PVZOrderRepositoryMockGetOrdersResults struct {
 // PVZOrderRepositoryMockGetOrdersOrigins contains origins of expectations of the PVZOrderRepository.GetOrders
 type PVZOrderRepositoryMockGetOrdersExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originUserID  string
 	originOptions string
 }
@@ -1095,7 +1192,7 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Optional() *mPVZOrderReposi
 }
 
 // Expect sets up expected params for PVZOrderRepository.GetOrders
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Expect(userID string, options ...abstractions.GetOrdersOptFunc) *mPVZOrderRepositoryMockGetOrders {
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Expect(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) *mPVZOrderRepositoryMockGetOrders {
 	if mmGetOrders.mock.funcGetOrders != nil {
 		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Set")
 	}
@@ -1108,7 +1205,7 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Expect(userID string, optio
 		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by ExpectParams functions")
 	}
 
-	mmGetOrders.defaultExpectation.params = &PVZOrderRepositoryMockGetOrdersParams{userID, options}
+	mmGetOrders.defaultExpectation.params = &PVZOrderRepositoryMockGetOrdersParams{ctx, userID, options}
 	mmGetOrders.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmGetOrders.expectations {
 		if minimock.Equal(e.params, mmGetOrders.defaultExpectation.params) {
@@ -1119,8 +1216,31 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Expect(userID string, optio
 	return mmGetOrders
 }
 
-// ExpectUserIDParam1 sets up expected param userID for PVZOrderRepository.GetOrders
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectUserIDParam1(userID string) *mPVZOrderRepositoryMockGetOrders {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.GetOrders
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockGetOrders {
+	if mmGetOrders.mock.funcGetOrders != nil {
+		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Set")
+	}
+
+	if mmGetOrders.defaultExpectation == nil {
+		mmGetOrders.defaultExpectation = &PVZOrderRepositoryMockGetOrdersExpectation{}
+	}
+
+	if mmGetOrders.defaultExpectation.params != nil {
+		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Expect")
+	}
+
+	if mmGetOrders.defaultExpectation.paramPtrs == nil {
+		mmGetOrders.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockGetOrdersParamPtrs{}
+	}
+	mmGetOrders.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetOrders.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetOrders
+}
+
+// ExpectUserIDParam2 sets up expected param userID for PVZOrderRepository.GetOrders
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectUserIDParam2(userID string) *mPVZOrderRepositoryMockGetOrders {
 	if mmGetOrders.mock.funcGetOrders != nil {
 		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Set")
 	}
@@ -1142,8 +1262,8 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectUserIDParam1(userID s
 	return mmGetOrders
 }
 
-// ExpectOptionsParam2 sets up expected param options for PVZOrderRepository.GetOrders
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectOptionsParam2(options ...abstractions.GetOrdersOptFunc) *mPVZOrderRepositoryMockGetOrders {
+// ExpectOptionsParam3 sets up expected param options for PVZOrderRepository.GetOrders
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectOptionsParam3(options ...abstractions.GetOrdersOptFunc) *mPVZOrderRepositoryMockGetOrders {
 	if mmGetOrders.mock.funcGetOrders != nil {
 		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Set")
 	}
@@ -1166,7 +1286,7 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) ExpectOptionsParam2(options
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.GetOrders
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Inspect(f func(userID string, options ...abstractions.GetOrdersOptFunc)) *mPVZOrderRepositoryMockGetOrders {
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Inspect(f func(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc)) *mPVZOrderRepositoryMockGetOrders {
 	if mmGetOrders.mock.inspectFuncGetOrders != nil {
 		mmGetOrders.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.GetOrders")
 	}
@@ -1191,7 +1311,7 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Return(pa1 []domain.PVZOrde
 }
 
 // Set uses given function f to mock the PVZOrderRepository.GetOrders method
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Set(f func(userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Set(f func(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
 	if mmGetOrders.defaultExpectation != nil {
 		mmGetOrders.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.GetOrders method")
 	}
@@ -1207,14 +1327,14 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) Set(f func(userID string, o
 
 // When sets expectation for the PVZOrderRepository.GetOrders which will trigger the result defined by the following
 // Then helper
-func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) When(userID string, options ...abstractions.GetOrdersOptFunc) *PVZOrderRepositoryMockGetOrdersExpectation {
+func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) When(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) *PVZOrderRepositoryMockGetOrdersExpectation {
 	if mmGetOrders.mock.funcGetOrders != nil {
 		mmGetOrders.mock.t.Fatalf("PVZOrderRepositoryMock.GetOrders mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockGetOrdersExpectation{
 		mock:               mmGetOrders.mock,
-		params:             &PVZOrderRepositoryMockGetOrdersParams{userID, options},
+		params:             &PVZOrderRepositoryMockGetOrdersParams{ctx, userID, options},
 		expectationOrigins: PVZOrderRepositoryMockGetOrdersExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmGetOrders.expectations = append(mmGetOrders.expectations, expectation)
@@ -1249,17 +1369,17 @@ func (mmGetOrders *mPVZOrderRepositoryMockGetOrders) invocationsDone() bool {
 }
 
 // GetOrders implements mm_usecases.PVZOrderRepository
-func (mmGetOrders *PVZOrderRepositoryMock) GetOrders(userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error) {
+func (mmGetOrders *PVZOrderRepositoryMock) GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) (pa1 []domain.PVZOrder, err error) {
 	mm_atomic.AddUint64(&mmGetOrders.beforeGetOrdersCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetOrders.afterGetOrdersCounter, 1)
 
 	mmGetOrders.t.Helper()
 
 	if mmGetOrders.inspectFuncGetOrders != nil {
-		mmGetOrders.inspectFuncGetOrders(userID, options...)
+		mmGetOrders.inspectFuncGetOrders(ctx, userID, options...)
 	}
 
-	mm_params := PVZOrderRepositoryMockGetOrdersParams{userID, options}
+	mm_params := PVZOrderRepositoryMockGetOrdersParams{ctx, userID, options}
 
 	// Record call args
 	mmGetOrders.GetOrdersMock.mutex.Lock()
@@ -1278,9 +1398,14 @@ func (mmGetOrders *PVZOrderRepositoryMock) GetOrders(userID string, options ...a
 		mm_want := mmGetOrders.GetOrdersMock.defaultExpectation.params
 		mm_want_ptrs := mmGetOrders.GetOrdersMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockGetOrdersParams{userID, options}
+		mm_got := PVZOrderRepositoryMockGetOrdersParams{ctx, userID, options}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetOrders.t.Errorf("PVZOrderRepositoryMock.GetOrders got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetOrders.GetOrdersMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.userID != nil && !minimock.Equal(*mm_want_ptrs.userID, mm_got.userID) {
 				mmGetOrders.t.Errorf("PVZOrderRepositoryMock.GetOrders got unexpected parameter userID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -1304,9 +1429,9 @@ func (mmGetOrders *PVZOrderRepositoryMock) GetOrders(userID string, options ...a
 		return (*mm_results).pa1, (*mm_results).err
 	}
 	if mmGetOrders.funcGetOrders != nil {
-		return mmGetOrders.funcGetOrders(userID, options...)
+		return mmGetOrders.funcGetOrders(ctx, userID, options...)
 	}
-	mmGetOrders.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetOrders. %v %v", userID, options)
+	mmGetOrders.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetOrders. %v %v %v", ctx, userID, options)
 	return
 }
 
@@ -1404,11 +1529,13 @@ type PVZOrderRepositoryMockGetReturnsExpectation struct {
 
 // PVZOrderRepositoryMockGetReturnsParams contains parameters of the PVZOrderRepository.GetReturns
 type PVZOrderRepositoryMockGetReturnsParams struct {
+	ctx     context.Context
 	options []abstractions.PagePaginationOptFunc
 }
 
 // PVZOrderRepositoryMockGetReturnsParamPtrs contains pointers to parameters of the PVZOrderRepository.GetReturns
 type PVZOrderRepositoryMockGetReturnsParamPtrs struct {
+	ctx     *context.Context
 	options *[]abstractions.PagePaginationOptFunc
 }
 
@@ -1421,6 +1548,7 @@ type PVZOrderRepositoryMockGetReturnsResults struct {
 // PVZOrderRepositoryMockGetReturnsOrigins contains origins of expectations of the PVZOrderRepository.GetReturns
 type PVZOrderRepositoryMockGetReturnsExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originOptions string
 }
 
@@ -1435,7 +1563,7 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Optional() *mPVZOrderRepo
 }
 
 // Expect sets up expected params for PVZOrderRepository.GetReturns
-func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Expect(options ...abstractions.PagePaginationOptFunc) *mPVZOrderRepositoryMockGetReturns {
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Expect(ctx context.Context, options ...abstractions.PagePaginationOptFunc) *mPVZOrderRepositoryMockGetReturns {
 	if mmGetReturns.mock.funcGetReturns != nil {
 		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by Set")
 	}
@@ -1448,7 +1576,7 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Expect(options ...abstrac
 		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by ExpectParams functions")
 	}
 
-	mmGetReturns.defaultExpectation.params = &PVZOrderRepositoryMockGetReturnsParams{options}
+	mmGetReturns.defaultExpectation.params = &PVZOrderRepositoryMockGetReturnsParams{ctx, options}
 	mmGetReturns.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmGetReturns.expectations {
 		if minimock.Equal(e.params, mmGetReturns.defaultExpectation.params) {
@@ -1459,8 +1587,31 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Expect(options ...abstrac
 	return mmGetReturns
 }
 
-// ExpectOptionsParam1 sets up expected param options for PVZOrderRepository.GetReturns
-func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) ExpectOptionsParam1(options ...abstractions.PagePaginationOptFunc) *mPVZOrderRepositoryMockGetReturns {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.GetReturns
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockGetReturns {
+	if mmGetReturns.mock.funcGetReturns != nil {
+		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by Set")
+	}
+
+	if mmGetReturns.defaultExpectation == nil {
+		mmGetReturns.defaultExpectation = &PVZOrderRepositoryMockGetReturnsExpectation{}
+	}
+
+	if mmGetReturns.defaultExpectation.params != nil {
+		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by Expect")
+	}
+
+	if mmGetReturns.defaultExpectation.paramPtrs == nil {
+		mmGetReturns.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockGetReturnsParamPtrs{}
+	}
+	mmGetReturns.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetReturns.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetReturns
+}
+
+// ExpectOptionsParam2 sets up expected param options for PVZOrderRepository.GetReturns
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) ExpectOptionsParam2(options ...abstractions.PagePaginationOptFunc) *mPVZOrderRepositoryMockGetReturns {
 	if mmGetReturns.mock.funcGetReturns != nil {
 		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by Set")
 	}
@@ -1483,7 +1634,7 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) ExpectOptionsParam1(optio
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.GetReturns
-func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Inspect(f func(options ...abstractions.PagePaginationOptFunc)) *mPVZOrderRepositoryMockGetReturns {
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Inspect(f func(ctx context.Context, options ...abstractions.PagePaginationOptFunc)) *mPVZOrderRepositoryMockGetReturns {
 	if mmGetReturns.mock.inspectFuncGetReturns != nil {
 		mmGetReturns.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.GetReturns")
 	}
@@ -1508,7 +1659,7 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Return(pa1 []domain.PVZOr
 }
 
 // Set uses given function f to mock the PVZOrderRepository.GetReturns method
-func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Set(f func(options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Set(f func(ctx context.Context, options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error)) *PVZOrderRepositoryMock {
 	if mmGetReturns.defaultExpectation != nil {
 		mmGetReturns.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.GetReturns method")
 	}
@@ -1524,14 +1675,14 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) Set(f func(options ...abs
 
 // When sets expectation for the PVZOrderRepository.GetReturns which will trigger the result defined by the following
 // Then helper
-func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) When(options ...abstractions.PagePaginationOptFunc) *PVZOrderRepositoryMockGetReturnsExpectation {
+func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) When(ctx context.Context, options ...abstractions.PagePaginationOptFunc) *PVZOrderRepositoryMockGetReturnsExpectation {
 	if mmGetReturns.mock.funcGetReturns != nil {
 		mmGetReturns.mock.t.Fatalf("PVZOrderRepositoryMock.GetReturns mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockGetReturnsExpectation{
 		mock:               mmGetReturns.mock,
-		params:             &PVZOrderRepositoryMockGetReturnsParams{options},
+		params:             &PVZOrderRepositoryMockGetReturnsParams{ctx, options},
 		expectationOrigins: PVZOrderRepositoryMockGetReturnsExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmGetReturns.expectations = append(mmGetReturns.expectations, expectation)
@@ -1566,17 +1717,17 @@ func (mmGetReturns *mPVZOrderRepositoryMockGetReturns) invocationsDone() bool {
 }
 
 // GetReturns implements mm_usecases.PVZOrderRepository
-func (mmGetReturns *PVZOrderRepositoryMock) GetReturns(options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error) {
+func (mmGetReturns *PVZOrderRepositoryMock) GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) (pa1 []domain.PVZOrder, err error) {
 	mm_atomic.AddUint64(&mmGetReturns.beforeGetReturnsCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetReturns.afterGetReturnsCounter, 1)
 
 	mmGetReturns.t.Helper()
 
 	if mmGetReturns.inspectFuncGetReturns != nil {
-		mmGetReturns.inspectFuncGetReturns(options...)
+		mmGetReturns.inspectFuncGetReturns(ctx, options...)
 	}
 
-	mm_params := PVZOrderRepositoryMockGetReturnsParams{options}
+	mm_params := PVZOrderRepositoryMockGetReturnsParams{ctx, options}
 
 	// Record call args
 	mmGetReturns.GetReturnsMock.mutex.Lock()
@@ -1595,9 +1746,14 @@ func (mmGetReturns *PVZOrderRepositoryMock) GetReturns(options ...abstractions.P
 		mm_want := mmGetReturns.GetReturnsMock.defaultExpectation.params
 		mm_want_ptrs := mmGetReturns.GetReturnsMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockGetReturnsParams{options}
+		mm_got := PVZOrderRepositoryMockGetReturnsParams{ctx, options}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetReturns.t.Errorf("PVZOrderRepositoryMock.GetReturns got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetReturns.GetReturnsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.options != nil && !minimock.Equal(*mm_want_ptrs.options, mm_got.options) {
 				mmGetReturns.t.Errorf("PVZOrderRepositoryMock.GetReturns got unexpected parameter options, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -1616,9 +1772,9 @@ func (mmGetReturns *PVZOrderRepositoryMock) GetReturns(options ...abstractions.P
 		return (*mm_results).pa1, (*mm_results).err
 	}
 	if mmGetReturns.funcGetReturns != nil {
-		return mmGetReturns.funcGetReturns(options...)
+		return mmGetReturns.funcGetReturns(ctx, options...)
 	}
-	mmGetReturns.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetReturns. %v", options)
+	mmGetReturns.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.GetReturns. %v %v", ctx, options)
 	return
 }
 
@@ -1716,11 +1872,13 @@ type PVZOrderRepositoryMockSetOrderIssuedExpectation struct {
 
 // PVZOrderRepositoryMockSetOrderIssuedParams contains parameters of the PVZOrderRepository.SetOrderIssued
 type PVZOrderRepositoryMockSetOrderIssuedParams struct {
+	ctx     context.Context
 	orderID string
 }
 
 // PVZOrderRepositoryMockSetOrderIssuedParamPtrs contains pointers to parameters of the PVZOrderRepository.SetOrderIssued
 type PVZOrderRepositoryMockSetOrderIssuedParamPtrs struct {
+	ctx     *context.Context
 	orderID *string
 }
 
@@ -1732,6 +1890,7 @@ type PVZOrderRepositoryMockSetOrderIssuedResults struct {
 // PVZOrderRepositoryMockSetOrderIssuedOrigins contains origins of expectations of the PVZOrderRepository.SetOrderIssued
 type PVZOrderRepositoryMockSetOrderIssuedExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originOrderID string
 }
 
@@ -1746,7 +1905,7 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Optional() *mPVZO
 }
 
 // Expect sets up expected params for PVZOrderRepository.SetOrderIssued
-func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Expect(orderID string) *mPVZOrderRepositoryMockSetOrderIssued {
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Expect(ctx context.Context, orderID string) *mPVZOrderRepositoryMockSetOrderIssued {
 	if mmSetOrderIssued.mock.funcSetOrderIssued != nil {
 		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by Set")
 	}
@@ -1759,7 +1918,7 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Expect(orderID st
 		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by ExpectParams functions")
 	}
 
-	mmSetOrderIssued.defaultExpectation.params = &PVZOrderRepositoryMockSetOrderIssuedParams{orderID}
+	mmSetOrderIssued.defaultExpectation.params = &PVZOrderRepositoryMockSetOrderIssuedParams{ctx, orderID}
 	mmSetOrderIssued.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmSetOrderIssued.expectations {
 		if minimock.Equal(e.params, mmSetOrderIssued.defaultExpectation.params) {
@@ -1770,8 +1929,31 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Expect(orderID st
 	return mmSetOrderIssued
 }
 
-// ExpectOrderIDParam1 sets up expected param orderID for PVZOrderRepository.SetOrderIssued
-func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) ExpectOrderIDParam1(orderID string) *mPVZOrderRepositoryMockSetOrderIssued {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.SetOrderIssued
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockSetOrderIssued {
+	if mmSetOrderIssued.mock.funcSetOrderIssued != nil {
+		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by Set")
+	}
+
+	if mmSetOrderIssued.defaultExpectation == nil {
+		mmSetOrderIssued.defaultExpectation = &PVZOrderRepositoryMockSetOrderIssuedExpectation{}
+	}
+
+	if mmSetOrderIssued.defaultExpectation.params != nil {
+		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by Expect")
+	}
+
+	if mmSetOrderIssued.defaultExpectation.paramPtrs == nil {
+		mmSetOrderIssued.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockSetOrderIssuedParamPtrs{}
+	}
+	mmSetOrderIssued.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSetOrderIssued.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSetOrderIssued
+}
+
+// ExpectOrderIDParam2 sets up expected param orderID for PVZOrderRepository.SetOrderIssued
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) ExpectOrderIDParam2(orderID string) *mPVZOrderRepositoryMockSetOrderIssued {
 	if mmSetOrderIssued.mock.funcSetOrderIssued != nil {
 		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by Set")
 	}
@@ -1794,7 +1976,7 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) ExpectOrderIDPara
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.SetOrderIssued
-func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Inspect(f func(orderID string)) *mPVZOrderRepositoryMockSetOrderIssued {
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Inspect(f func(ctx context.Context, orderID string)) *mPVZOrderRepositoryMockSetOrderIssued {
 	if mmSetOrderIssued.mock.inspectFuncSetOrderIssued != nil {
 		mmSetOrderIssued.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.SetOrderIssued")
 	}
@@ -1819,7 +2001,7 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Return(err error)
 }
 
 // Set uses given function f to mock the PVZOrderRepository.SetOrderIssued method
-func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Set(f func(orderID string) (err error)) *PVZOrderRepositoryMock {
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Set(f func(ctx context.Context, orderID string) (err error)) *PVZOrderRepositoryMock {
 	if mmSetOrderIssued.defaultExpectation != nil {
 		mmSetOrderIssued.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.SetOrderIssued method")
 	}
@@ -1835,14 +2017,14 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) Set(f func(orderI
 
 // When sets expectation for the PVZOrderRepository.SetOrderIssued which will trigger the result defined by the following
 // Then helper
-func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) When(orderID string) *PVZOrderRepositoryMockSetOrderIssuedExpectation {
+func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) When(ctx context.Context, orderID string) *PVZOrderRepositoryMockSetOrderIssuedExpectation {
 	if mmSetOrderIssued.mock.funcSetOrderIssued != nil {
 		mmSetOrderIssued.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderIssued mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockSetOrderIssuedExpectation{
 		mock:               mmSetOrderIssued.mock,
-		params:             &PVZOrderRepositoryMockSetOrderIssuedParams{orderID},
+		params:             &PVZOrderRepositoryMockSetOrderIssuedParams{ctx, orderID},
 		expectationOrigins: PVZOrderRepositoryMockSetOrderIssuedExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmSetOrderIssued.expectations = append(mmSetOrderIssued.expectations, expectation)
@@ -1877,17 +2059,17 @@ func (mmSetOrderIssued *mPVZOrderRepositoryMockSetOrderIssued) invocationsDone()
 }
 
 // SetOrderIssued implements mm_usecases.PVZOrderRepository
-func (mmSetOrderIssued *PVZOrderRepositoryMock) SetOrderIssued(orderID string) (err error) {
+func (mmSetOrderIssued *PVZOrderRepositoryMock) SetOrderIssued(ctx context.Context, orderID string) (err error) {
 	mm_atomic.AddUint64(&mmSetOrderIssued.beforeSetOrderIssuedCounter, 1)
 	defer mm_atomic.AddUint64(&mmSetOrderIssued.afterSetOrderIssuedCounter, 1)
 
 	mmSetOrderIssued.t.Helper()
 
 	if mmSetOrderIssued.inspectFuncSetOrderIssued != nil {
-		mmSetOrderIssued.inspectFuncSetOrderIssued(orderID)
+		mmSetOrderIssued.inspectFuncSetOrderIssued(ctx, orderID)
 	}
 
-	mm_params := PVZOrderRepositoryMockSetOrderIssuedParams{orderID}
+	mm_params := PVZOrderRepositoryMockSetOrderIssuedParams{ctx, orderID}
 
 	// Record call args
 	mmSetOrderIssued.SetOrderIssuedMock.mutex.Lock()
@@ -1906,9 +2088,14 @@ func (mmSetOrderIssued *PVZOrderRepositoryMock) SetOrderIssued(orderID string) (
 		mm_want := mmSetOrderIssued.SetOrderIssuedMock.defaultExpectation.params
 		mm_want_ptrs := mmSetOrderIssued.SetOrderIssuedMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockSetOrderIssuedParams{orderID}
+		mm_got := PVZOrderRepositoryMockSetOrderIssuedParams{ctx, orderID}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSetOrderIssued.t.Errorf("PVZOrderRepositoryMock.SetOrderIssued got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSetOrderIssued.SetOrderIssuedMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.orderID != nil && !minimock.Equal(*mm_want_ptrs.orderID, mm_got.orderID) {
 				mmSetOrderIssued.t.Errorf("PVZOrderRepositoryMock.SetOrderIssued got unexpected parameter orderID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -1927,9 +2114,9 @@ func (mmSetOrderIssued *PVZOrderRepositoryMock) SetOrderIssued(orderID string) (
 		return (*mm_results).err
 	}
 	if mmSetOrderIssued.funcSetOrderIssued != nil {
-		return mmSetOrderIssued.funcSetOrderIssued(orderID)
+		return mmSetOrderIssued.funcSetOrderIssued(ctx, orderID)
 	}
-	mmSetOrderIssued.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.SetOrderIssued. %v", orderID)
+	mmSetOrderIssued.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.SetOrderIssued. %v %v", ctx, orderID)
 	return
 }
 
@@ -2027,11 +2214,13 @@ type PVZOrderRepositoryMockSetOrderReturnedExpectation struct {
 
 // PVZOrderRepositoryMockSetOrderReturnedParams contains parameters of the PVZOrderRepository.SetOrderReturned
 type PVZOrderRepositoryMockSetOrderReturnedParams struct {
+	ctx     context.Context
 	orderID string
 }
 
 // PVZOrderRepositoryMockSetOrderReturnedParamPtrs contains pointers to parameters of the PVZOrderRepository.SetOrderReturned
 type PVZOrderRepositoryMockSetOrderReturnedParamPtrs struct {
+	ctx     *context.Context
 	orderID *string
 }
 
@@ -2043,6 +2232,7 @@ type PVZOrderRepositoryMockSetOrderReturnedResults struct {
 // PVZOrderRepositoryMockSetOrderReturnedOrigins contains origins of expectations of the PVZOrderRepository.SetOrderReturned
 type PVZOrderRepositoryMockSetOrderReturnedExpectationOrigins struct {
 	origin        string
+	originCtx     string
 	originOrderID string
 }
 
@@ -2057,7 +2247,7 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Optional() *m
 }
 
 // Expect sets up expected params for PVZOrderRepository.SetOrderReturned
-func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Expect(orderID string) *mPVZOrderRepositoryMockSetOrderReturned {
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Expect(ctx context.Context, orderID string) *mPVZOrderRepositoryMockSetOrderReturned {
 	if mmSetOrderReturned.mock.funcSetOrderReturned != nil {
 		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by Set")
 	}
@@ -2070,7 +2260,7 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Expect(orderI
 		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by ExpectParams functions")
 	}
 
-	mmSetOrderReturned.defaultExpectation.params = &PVZOrderRepositoryMockSetOrderReturnedParams{orderID}
+	mmSetOrderReturned.defaultExpectation.params = &PVZOrderRepositoryMockSetOrderReturnedParams{ctx, orderID}
 	mmSetOrderReturned.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmSetOrderReturned.expectations {
 		if minimock.Equal(e.params, mmSetOrderReturned.defaultExpectation.params) {
@@ -2081,8 +2271,31 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Expect(orderI
 	return mmSetOrderReturned
 }
 
-// ExpectOrderIDParam1 sets up expected param orderID for PVZOrderRepository.SetOrderReturned
-func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) ExpectOrderIDParam1(orderID string) *mPVZOrderRepositoryMockSetOrderReturned {
+// ExpectCtxParam1 sets up expected param ctx for PVZOrderRepository.SetOrderReturned
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) ExpectCtxParam1(ctx context.Context) *mPVZOrderRepositoryMockSetOrderReturned {
+	if mmSetOrderReturned.mock.funcSetOrderReturned != nil {
+		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by Set")
+	}
+
+	if mmSetOrderReturned.defaultExpectation == nil {
+		mmSetOrderReturned.defaultExpectation = &PVZOrderRepositoryMockSetOrderReturnedExpectation{}
+	}
+
+	if mmSetOrderReturned.defaultExpectation.params != nil {
+		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by Expect")
+	}
+
+	if mmSetOrderReturned.defaultExpectation.paramPtrs == nil {
+		mmSetOrderReturned.defaultExpectation.paramPtrs = &PVZOrderRepositoryMockSetOrderReturnedParamPtrs{}
+	}
+	mmSetOrderReturned.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSetOrderReturned.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSetOrderReturned
+}
+
+// ExpectOrderIDParam2 sets up expected param orderID for PVZOrderRepository.SetOrderReturned
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) ExpectOrderIDParam2(orderID string) *mPVZOrderRepositoryMockSetOrderReturned {
 	if mmSetOrderReturned.mock.funcSetOrderReturned != nil {
 		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by Set")
 	}
@@ -2105,7 +2318,7 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) ExpectOrderID
 }
 
 // Inspect accepts an inspector function that has same arguments as the PVZOrderRepository.SetOrderReturned
-func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Inspect(f func(orderID string)) *mPVZOrderRepositoryMockSetOrderReturned {
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Inspect(f func(ctx context.Context, orderID string)) *mPVZOrderRepositoryMockSetOrderReturned {
 	if mmSetOrderReturned.mock.inspectFuncSetOrderReturned != nil {
 		mmSetOrderReturned.mock.t.Fatalf("Inspect function is already set for PVZOrderRepositoryMock.SetOrderReturned")
 	}
@@ -2130,7 +2343,7 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Return(err er
 }
 
 // Set uses given function f to mock the PVZOrderRepository.SetOrderReturned method
-func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Set(f func(orderID string) (err error)) *PVZOrderRepositoryMock {
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Set(f func(ctx context.Context, orderID string) (err error)) *PVZOrderRepositoryMock {
 	if mmSetOrderReturned.defaultExpectation != nil {
 		mmSetOrderReturned.mock.t.Fatalf("Default expectation is already set for the PVZOrderRepository.SetOrderReturned method")
 	}
@@ -2146,14 +2359,14 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) Set(f func(or
 
 // When sets expectation for the PVZOrderRepository.SetOrderReturned which will trigger the result defined by the following
 // Then helper
-func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) When(orderID string) *PVZOrderRepositoryMockSetOrderReturnedExpectation {
+func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) When(ctx context.Context, orderID string) *PVZOrderRepositoryMockSetOrderReturnedExpectation {
 	if mmSetOrderReturned.mock.funcSetOrderReturned != nil {
 		mmSetOrderReturned.mock.t.Fatalf("PVZOrderRepositoryMock.SetOrderReturned mock is already set by Set")
 	}
 
 	expectation := &PVZOrderRepositoryMockSetOrderReturnedExpectation{
 		mock:               mmSetOrderReturned.mock,
-		params:             &PVZOrderRepositoryMockSetOrderReturnedParams{orderID},
+		params:             &PVZOrderRepositoryMockSetOrderReturnedParams{ctx, orderID},
 		expectationOrigins: PVZOrderRepositoryMockSetOrderReturnedExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmSetOrderReturned.expectations = append(mmSetOrderReturned.expectations, expectation)
@@ -2188,17 +2401,17 @@ func (mmSetOrderReturned *mPVZOrderRepositoryMockSetOrderReturned) invocationsDo
 }
 
 // SetOrderReturned implements mm_usecases.PVZOrderRepository
-func (mmSetOrderReturned *PVZOrderRepositoryMock) SetOrderReturned(orderID string) (err error) {
+func (mmSetOrderReturned *PVZOrderRepositoryMock) SetOrderReturned(ctx context.Context, orderID string) (err error) {
 	mm_atomic.AddUint64(&mmSetOrderReturned.beforeSetOrderReturnedCounter, 1)
 	defer mm_atomic.AddUint64(&mmSetOrderReturned.afterSetOrderReturnedCounter, 1)
 
 	mmSetOrderReturned.t.Helper()
 
 	if mmSetOrderReturned.inspectFuncSetOrderReturned != nil {
-		mmSetOrderReturned.inspectFuncSetOrderReturned(orderID)
+		mmSetOrderReturned.inspectFuncSetOrderReturned(ctx, orderID)
 	}
 
-	mm_params := PVZOrderRepositoryMockSetOrderReturnedParams{orderID}
+	mm_params := PVZOrderRepositoryMockSetOrderReturnedParams{ctx, orderID}
 
 	// Record call args
 	mmSetOrderReturned.SetOrderReturnedMock.mutex.Lock()
@@ -2217,9 +2430,14 @@ func (mmSetOrderReturned *PVZOrderRepositoryMock) SetOrderReturned(orderID strin
 		mm_want := mmSetOrderReturned.SetOrderReturnedMock.defaultExpectation.params
 		mm_want_ptrs := mmSetOrderReturned.SetOrderReturnedMock.defaultExpectation.paramPtrs
 
-		mm_got := PVZOrderRepositoryMockSetOrderReturnedParams{orderID}
+		mm_got := PVZOrderRepositoryMockSetOrderReturnedParams{ctx, orderID}
 
 		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSetOrderReturned.t.Errorf("PVZOrderRepositoryMock.SetOrderReturned got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSetOrderReturned.SetOrderReturnedMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
 
 			if mm_want_ptrs.orderID != nil && !minimock.Equal(*mm_want_ptrs.orderID, mm_got.orderID) {
 				mmSetOrderReturned.t.Errorf("PVZOrderRepositoryMock.SetOrderReturned got unexpected parameter orderID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
@@ -2238,9 +2456,9 @@ func (mmSetOrderReturned *PVZOrderRepositoryMock) SetOrderReturned(orderID strin
 		return (*mm_results).err
 	}
 	if mmSetOrderReturned.funcSetOrderReturned != nil {
-		return mmSetOrderReturned.funcSetOrderReturned(orderID)
+		return mmSetOrderReturned.funcSetOrderReturned(ctx, orderID)
 	}
-	mmSetOrderReturned.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.SetOrderReturned. %v", orderID)
+	mmSetOrderReturned.t.Fatalf("Unexpected call to PVZOrderRepositoryMock.SetOrderReturned. %v %v", ctx, orderID)
 	return
 }
 

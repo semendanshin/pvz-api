@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"homework/internal/abstractions"
@@ -101,7 +102,10 @@ func (m *getReturnsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *getReturnsModel) View() string {
 	if m.changed {
-		orders, err := m.useCase.GetReturns(abstractions.WithPage(m.page), abstractions.WithPageSize(m.pageSize))
+		orders, err := m.useCase.GetReturns(
+			context.Background(),
+			abstractions.WithPage(m.page), abstractions.WithPageSize(m.pageSize),
+		)
 		if err != nil {
 			return err.Error()
 		}

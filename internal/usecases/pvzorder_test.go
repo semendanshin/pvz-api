@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"errors"
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,10 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 		packaging            domain.PackagingType
 		additionalFilm       bool
 	}
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	ctrl := minimock.NewController(t)
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
@@ -95,7 +100,10 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			err := useCase.AcceptOrderDelivery(tt.args.orderID, tt.args.recipientID, tt.args.storageTime, tt.args.cost, tt.args.weight, tt.args.packaging, tt.args.additionalFilm)
+			err := useCase.AcceptOrderDelivery(
+				ctx,
+				tt.args.orderID, tt.args.recipientID, tt.args.storageTime, tt.args.cost, tt.args.weight, tt.args.packaging, tt.args.additionalFilm,
+			)
 			tt.wantErr(t, err)
 		})
 	}
@@ -115,6 +123,10 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
 
 	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	tests := []struct {
 		name    string
@@ -196,7 +208,7 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			err := useCase.ReturnOrderDelivery(tt.args.orderID)
+			err := useCase.ReturnOrderDelivery(ctx, tt.args.orderID)
 			tt.wantErr(t, err)
 		})
 	}
@@ -215,6 +227,10 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
 
 	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	tests := []struct {
 		name    string
@@ -307,7 +323,7 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			err := useCase.GiveOrderToClient(tt.args.orderIDs)
+			err := useCase.GiveOrderToClient(ctx, tt.args.orderIDs)
 			tt.wantErr(t, err)
 		})
 	}
@@ -326,6 +342,10 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
 
 	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	tests := []struct {
 		name    string
@@ -363,7 +383,7 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			_, err := useCase.GetOrders(tt.args.userID)
+			_, err := useCase.GetOrders(ctx, tt.args.userID)
 			tt.wantErr(t, err)
 		})
 	}
@@ -383,6 +403,10 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
 
 	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	tests := []struct {
 		name    string
@@ -488,7 +512,7 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			err := useCase.AcceptReturn(tt.args.userID, tt.args.orderID)
+			err := useCase.AcceptReturn(ctx, tt.args.userID, tt.args.orderID)
 			tt.wantErr(t, err)
 		})
 	}
@@ -503,6 +527,10 @@ func TestPVZOrderUseCase_GetReturns(t *testing.T) {
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
 
 	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	tests := []struct {
 		name    string
@@ -532,7 +560,7 @@ func TestPVZOrderUseCase_GetReturns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			_, err := useCase.GetReturns()
+			_, err := useCase.GetReturns(ctx)
 			tt.wantErr(t, err)
 		})
 	}

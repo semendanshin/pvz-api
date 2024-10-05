@@ -2,13 +2,13 @@ package e2e
 
 import (
 	"github.com/rogpeppe/go-internal/testscript"
-	"homework/cmd/hw1/cmds"
+	"homework/cmd/hw1"
 	"os"
 	"testing"
 )
 
 func Main() int {
-	err := cmds.Execute()
+	err := main.Run()
 	if err != nil {
 		return 1
 	}

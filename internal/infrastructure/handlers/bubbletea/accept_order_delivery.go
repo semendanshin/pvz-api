@@ -1,6 +1,7 @@
 package bubbletea
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	"homework/internal/abstractions"
@@ -188,6 +189,7 @@ func acceptOrderModelSubmit(useCase abstractions.IPVZOrderUseCase) func(values [
 		}
 
 		return useCase.AcceptOrderDelivery(
+			context.Background(),
 			validated.OrderID, validated.RecipientID, validated.StorageTime,
 			validated.Cost, validated.Weight, validated.Packaging, validated.AdditionalFilm,
 		)
