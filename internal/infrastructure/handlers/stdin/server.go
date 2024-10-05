@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 )
 
 type HandlerFunc func(ctx context.Context, args []string) (string, error)
@@ -25,6 +26,8 @@ type Server struct {
 	done         chan struct{}
 	handlers     map[Command]HandlerFunc
 	numOfWorkers int
+
+	mu sync.RWMutex
 }
 
 func NewServer(numOfWorkers int) *Server {
@@ -123,20 +126,12 @@ func (s *Server) runDispatch(ctx context.Context, input chan string, output chan
 }
 
 func (s *Server) AddHandler(command Command, handler HandlerFunc) {
+	// Наверное лучше будет здесь проверять флаг running и возвращать ошибку, если сервер уже запущен
+	// Но в задании надо использовать мьютексы, так что пусть будет так
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.handlers[command] = handler
-}
-
-func (s *Server) handleCommand(ctx context.Context, command Command, args []string) (string, error) {
-	handler, ok := s.handlers[command]
-	if !ok {
-		var availableCommands []string
-		for k := range s.handlers {
-			availableCommands = append(availableCommands, string(k))
-		}
-		return "", fmt.Errorf("command %s not found. Available commands: %v", command, availableCommands)
-	}
-
-	return handler(ctx, args)
 }
 
 func (s *Server) handleInput(ctx context.Context, msg string) string {
@@ -154,6 +149,24 @@ func (s *Server) handleInput(ctx context.Context, msg string) string {
 	}
 
 	return output
+}
+
+func (s *Server) handleCommand(ctx context.Context, command Command, args []string) (string, error) {
+	s.mu.RLock()
+	handler, ok := s.handlers[command]
+
+	if !ok {
+		var availableCommands []string
+		for k := range s.handlers {
+			availableCommands = append(availableCommands, string(k))
+		}
+		s.mu.RUnlock()
+		return "", fmt.Errorf("command %s not found. Available commands: %v", command, availableCommands)
+	}
+
+	s.mu.RUnlock()
+
+	return handler(ctx, args)
 }
 
 func (s *Server) helpHandler(ctx context.Context, args []string) (string, error) {
