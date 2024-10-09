@@ -2,7 +2,7 @@ package e2e
 
 import (
 	"github.com/rogpeppe/go-internal/testscript"
-	"homework/cmd/hw1"
+	"homework/cmd/cli"
 	"os"
 	"testing"
 )
