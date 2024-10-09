@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+package pvz.v1;
+
+option go_package = "homework/pkg/pvz/v1;pvz";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "PVZ Service"
+    version: "1.0.0"
+    description: "PVZ Service API"
+  };
+  consumes: "application/json"
+  produces: "application/json"
+  schemes: HTTP
+};
+
+service PvzService {
+  rpc AcceptOrderDelivery(AcceptOrderDeliveryRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/pvz-service/accept-order-delivery"
+      body: "*"
+    };
+  }
+
+  rpc ReturnOrderDelivery(ReturnOrderDeliveryRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/pvz-service/return-order-delivery"
+      body: "*"
+    };
+  }
+
+  rpc GiveOrderToClient(GiveOrderToClientRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/pvz-service/give-order-to-client"
+      body: "*"
+    };
+  }
+
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/pvz-service/get-orders"
+    };
+  }
+
+  rpc AcceptReturn(AcceptReturnRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/pvz-service/accept-return"
+      body: "*"
+    };
+  }
+
+  rpc GetReturns(GetReturnsRequest) returns (GetReturnsResponse) {
+    option (google.api.http) = {
+      get: "/v1/pvz-service/get-returns"
+    };
+  }
+}
+
+message AcceptOrderDeliveryRequest {
+  string order_id = 1 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  string recipient_id = 2 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  int64 storage_time = 3 [
+    (validate.rules).int64.gte = 0,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  int32 cost = 4 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  int32 weight = 5 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  PackagingType packaging = 6 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+  bool additional_film = 7 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message ReturnOrderDeliveryRequest {
+  string order_id = 1 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message GiveOrderToClientRequest {
+  repeated string order_ids = 1 [
+    (validate.rules).repeated = {
+      min_items: 1
+    },
+    (validate.rules).repeated.items.string.min_len = 1,
+    (validate.rules).repeated.items.string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message GetOrdersRequest {
+  string user_id = 1 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  optional int32 lastN = 2 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+  optional bool samePVZ = 3 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+  optional string cursor = 4 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+  optional int32 limit = 5 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+message GetOrdersResponse {
+  repeated PVZOrder orders = 1 [
+    (validate.rules).repeated = {
+      min_items: 1
+    }
+  ];
+}
+
+message AcceptReturnRequest {
+  string user_id = 1 [
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  string order_id = 2[
+    (validate.rules).string.min_len = 1,
+    (validate.rules).string.max_len = 36,
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message GetReturnsRequest {
+  optional int32 page = 1 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+  optional int32 pageSize = 2 [
+    (validate.rules).int32.gte = 0,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+message GetReturnsResponse {
+  repeated PVZOrder returns = 1 [
+    (validate.rules).repeated = {
+      min_items: 1
+    }
+  ];
+}
+
+message PVZOrder {
+  string id = 1;
+  string user_id = 2;
+  string recipient_id = 3;
+  int64 storage_time = 4;
+  int32 cost = 5;
+  int32 weight = 6;
+  PackagingType packaging = 7;
+  bool additional_film = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+enum PackagingType {
+  UNKNOWN = 0;
+  BOX = 1;
+  BAG = 2;
+  FILM = 3;
+}

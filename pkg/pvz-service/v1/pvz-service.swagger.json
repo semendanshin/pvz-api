@@ -1,0 +1,432 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "PVZ Service",
+    "description": "PVZ Service API",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "PvzService"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/pvz-service/accept-order-delivery": {
+      "post": {
+        "operationId": "PvzService_AcceptOrderDelivery",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AcceptOrderDeliveryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    },
+    "/v1/pvz-service/accept-return": {
+      "post": {
+        "operationId": "PvzService_AcceptReturn",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AcceptReturnRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    },
+    "/v1/pvz-service/get-orders": {
+      "get": {
+        "operationId": "PvzService_GetOrders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetOrdersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "lastN",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "samePVZ",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    },
+    "/v1/pvz-service/get-returns": {
+      "get": {
+        "operationId": "PvzService_GetReturns",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetReturnsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    },
+    "/v1/pvz-service/give-order-to-client": {
+      "post": {
+        "operationId": "PvzService_GiveOrderToClient",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GiveOrderToClientRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    },
+    "/v1/pvz-service/return-order-delivery": {
+      "post": {
+        "operationId": "PvzService_ReturnOrderDelivery",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ReturnOrderDeliveryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PvzService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AcceptOrderDeliveryRequest": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        },
+        "recipientId": {
+          "type": "string"
+        },
+        "storageTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cost": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "packaging": {
+          "$ref": "#/definitions/v1PackagingType"
+        },
+        "additionalFilm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "orderId",
+        "recipientId",
+        "storageTime",
+        "cost",
+        "weight",
+        "packaging",
+        "additionalFilm"
+      ]
+    },
+    "v1AcceptReturnRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "orderId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "userId",
+        "orderId"
+      ]
+    },
+    "v1GetOrdersResponse": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PVZOrder"
+          }
+        }
+      }
+    },
+    "v1GetReturnsResponse": {
+      "type": "object",
+      "properties": {
+        "returns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PVZOrder"
+          }
+        }
+      }
+    },
+    "v1GiveOrderToClientRequest": {
+      "type": "object",
+      "properties": {
+        "orderIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "orderIds"
+      ]
+    },
+    "v1PVZOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "recipientId": {
+          "type": "string"
+        },
+        "storageTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cost": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "packaging": {
+          "$ref": "#/definitions/v1PackagingType"
+        },
+        "additionalFilm": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1PackagingType": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "BOX",
+        "BAG",
+        "FILM"
+      ],
+      "default": "UNKNOWN"
+    },
+    "v1ReturnOrderDeliveryRequest": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "orderId"
+      ]
+    }
+  }
+}
