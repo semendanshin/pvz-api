@@ -369,16 +369,13 @@
     "v1PVZOrder": {
       "type": "object",
       "properties": {
-        "id": {
+        "orderId": {
           "type": "string"
         },
-        "userId": {
+        "pvzId": {
           "type": "string"
         },
         "recipientId": {
-          "type": "string"
-        },
-        "storageTime": {
           "type": "string"
         },
         "cost": {
@@ -395,11 +392,18 @@
         "additionalFilm": {
           "type": "boolean"
         },
-        "createdAt": {
+        "receivedAt": {
           "type": "string",
           "format": "date-time"
         },
-        "updatedAt": {
+        "storageTime": {
+          "type": "string"
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "returnedAt": {
           "type": "string",
           "format": "date-time"
         }

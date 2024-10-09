@@ -180,16 +180,21 @@ message GetReturnsResponse {
 }
 
 message PVZOrder {
-  string id = 1;
-  string user_id = 2;
+  string order_id = 1;
+  string pvz_id = 2;
   string recipient_id = 3;
-  google.protobuf.Duration storage_time = 4;
-  int32 cost = 5;
-  int32 weight = 6;
-  PackagingType packaging = 7;
-  bool additional_film = 8;
-  google.protobuf.Timestamp created_at = 9;
-  google.protobuf.Timestamp updated_at = 10;
+
+  int32 cost = 4;
+  int32 weight = 5;
+
+  PackagingType packaging = 6;
+  bool additional_film = 7;
+
+  google.protobuf.Timestamp received_at = 8;
+  google.protobuf.Duration storage_time = 9;
+
+  optional google.protobuf.Timestamp issued_at = 10;
+  optional google.protobuf.Timestamp returned_at = 11;
 }
 
 enum PackagingType {

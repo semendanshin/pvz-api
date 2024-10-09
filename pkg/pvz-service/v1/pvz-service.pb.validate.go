@@ -1189,11 +1189,48 @@ func (m *PVZOrder) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	// no validation rules for OrderId
 
-	// no validation rules for UserId
+	// no validation rules for PvzId
 
 	// no validation rules for RecipientId
+
+	// no validation rules for Cost
+
+	// no validation rules for Weight
+
+	// no validation rules for Packaging
+
+	// no validation rules for AdditionalFilm
+
+	if all {
+		switch v := interface{}(m.GetReceivedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PVZOrderValidationError{
+					field:  "ReceivedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PVZOrderValidationError{
+					field:  "ReceivedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReceivedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PVZOrderValidationError{
+				field:  "ReceivedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if all {
 		switch v := interface{}(m.GetStorageTime()).(type) {
@@ -1224,70 +1261,70 @@ func (m *PVZOrder) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Cost
+	if m.IssuedAt != nil {
 
-	// no validation rules for Weight
-
-	// no validation rules for Packaging
-
-	// no validation rules for AdditionalFilm
-
-	if all {
-		switch v := interface{}(m.GetCreatedAt()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PVZOrderValidationError{
-					field:  "CreatedAt",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+		if all {
+			switch v := interface{}(m.GetIssuedAt()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PVZOrderValidationError{
+						field:  "IssuedAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PVZOrderValidationError{
+						field:  "IssuedAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(m.GetIssuedAt()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PVZOrderValidationError{
-					field:  "CreatedAt",
+				return PVZOrderValidationError{
+					field:  "IssuedAt",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PVZOrderValidationError{
-				field:  "CreatedAt",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
-	if all {
-		switch v := interface{}(m.GetUpdatedAt()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PVZOrderValidationError{
-					field:  "UpdatedAt",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	if m.ReturnedAt != nil {
+
+		if all {
+			switch v := interface{}(m.GetReturnedAt()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PVZOrderValidationError{
+						field:  "ReturnedAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PVZOrderValidationError{
+						field:  "ReturnedAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(m.GetReturnedAt()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PVZOrderValidationError{
-					field:  "UpdatedAt",
+				return PVZOrderValidationError{
+					field:  "ReturnedAt",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PVZOrderValidationError{
-				field:  "UpdatedAt",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {

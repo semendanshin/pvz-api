@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"homework/internal/abstractions"
+	"homework/internal/infrastructure/server/middleware"
 	pvz_service "homework/internal/infrastructure/server/services/pvz-service"
 	desc "homework/pkg/pvz-service/v1"
 	"log"
@@ -25,9 +26,12 @@ func NewGRPCServer(useCase abstractions.IPVZOrderUseCase) *GRPCServer {
 }
 
 func (s *GRPCServer) Run(host string, port int) error {
-
 	// Create a new server instance
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.StdLogging,
+		),
+	)
 
 	// Register the service
 	desc.RegisterPvzServiceServer(srv, pvz_service.NewPVZService(s.useCase))
