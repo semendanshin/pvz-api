@@ -79,15 +79,34 @@ func (m *AcceptOrderDeliveryRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetStorageTime() < 0 {
-		err := AcceptOrderDeliveryRequestValidationError{
-			field:  "StorageTime",
-			reason: "value must be greater than or equal to 0",
+	if d := m.GetStorageTime(); d != nil {
+		dur, err := d.AsDuration(), d.CheckValid()
+		if err != nil {
+			err = AcceptOrderDeliveryRequestValidationError{
+				field:  "StorageTime",
+				reason: "value is not a valid duration",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+
+			gte := time.Duration(0*time.Second + 0*time.Nanosecond)
+
+			if dur < gte {
+				err := AcceptOrderDeliveryRequestValidationError{
+					field:  "StorageTime",
+					reason: "value must be greater than or equal to 0s",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	if m.GetCost() < 0 {
@@ -1176,7 +1195,34 @@ func (m *PVZOrder) validate(all bool) error {
 
 	// no validation rules for RecipientId
 
-	// no validation rules for StorageTime
+	if all {
+		switch v := interface{}(m.GetStorageTime()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PVZOrderValidationError{
+					field:  "StorageTime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PVZOrderValidationError{
+					field:  "StorageTime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStorageTime()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PVZOrderValidationError{
+				field:  "StorageTime",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	// no validation rules for Cost
 

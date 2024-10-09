@@ -286,8 +286,7 @@
           "type": "string"
         },
         "storageTime": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         },
         "cost": {
           "type": "integer",
@@ -380,8 +379,7 @@
           "type": "string"
         },
         "storageTime": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         },
         "cost": {
           "type": "integer",

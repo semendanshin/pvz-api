@@ -6,6 +6,7 @@ option go_package = "homework/pkg/pvz/v1;pvz";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "google/api/field_behavior.proto";
 import "google/api/annotations.proto";
 import "validate/validate.proto";
@@ -75,8 +76,8 @@ message AcceptOrderDeliveryRequest {
     (validate.rules).string.max_len = 36,
     (google.api.field_behavior) = REQUIRED
   ];
-  int64 storage_time = 3 [
-    (validate.rules).int64.gte = 0,
+  google.protobuf.Duration storage_time = 3 [
+    (validate.rules).duration.gte.seconds = 0,
     (google.api.field_behavior) = REQUIRED
   ];
   int32 cost = 4 [
@@ -182,7 +183,7 @@ message PVZOrder {
   string id = 1;
   string user_id = 2;
   string recipient_id = 3;
-  int64 storage_time = 4;
+  google.protobuf.Duration storage_time = 4;
   int32 cost = 5;
   int32 weight = 6;
   PackagingType packaging = 7;
