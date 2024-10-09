@@ -2,9 +2,11 @@ package abstractions
 
 import (
 	"context"
+	"time"
+
 	"homework/internal/domain"
 
-	"time"
+	_ "github.com/gojuno/minimock/v3"
 )
 
 // PagePaginationOptions is a struct for pagination options
@@ -107,6 +109,8 @@ func NewGetOrdersOptions(options ...GetOrdersOptFunc) (*GetOrdersOptions, error)
 	}
 	return &opts, nil
 }
+
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i IPVZOrderUseCase -s _mock.go -o ./mocks
 
 // IPVZOrderUseCase is an interface for order use cases
 type IPVZOrderUseCase interface {

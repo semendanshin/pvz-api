@@ -7,24 +7,32 @@ import (
 	desc "homework/pkg/pvz-service/v1"
 )
 
+func packagingTypeFromProto(packaging desc.PackagingType) domain.PackagingType {
+	switch packaging {
+	case desc.PackagingType_BOX:
+		return domain.PackagingTypeBox
+	case desc.PackagingType_BAG:
+		return domain.PackagingTypeBag
+	case desc.PackagingType_FILM:
+		return domain.PackagingTypeFilm
+	default:
+		return domain.PackagingTypeUnknown
+	}
+}
+
 func (p *PVZService) AcceptOrderDelivery(ctx context.Context, req *desc.AcceptOrderDeliveryRequest) (*emptypb.Empty, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
 
-	packagingType, err := domain.NewPackagingType(req.GetPackaging().String())
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.useCase.AcceptOrderDelivery(
+	err := p.useCase.AcceptOrderDelivery(
 		ctx,
 		req.GetOrderId(),
 		req.GetRecipientId(),
 		req.GetStorageTime().AsDuration(),
 		int(req.GetCost()),
 		int(req.GetWeight()),
-		packagingType,
+		packagingTypeFromProto(req.Packaging),
 		req.GetAdditionalFilm(),
 	)
 	if err != nil {
