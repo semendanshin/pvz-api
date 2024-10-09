@@ -58,7 +58,7 @@ func Run() error {
 
 	grpcServer := server.NewGRPCServer(pvzOrderUseCase)
 
-	return grpcServer.Run("localhost", 8080)
+	return grpcServer.Run(ctx, "localhost", 8080, 8081)
 }
 
 func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase {
