@@ -1,4 +1,5 @@
 **/.env
-./.idea
-./vendor.protogen
-./bin
+.idea
+vendor.protogen
+bin
+.DS_Store
