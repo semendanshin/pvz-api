@@ -35,6 +35,7 @@ func (s *GRPCServer) Run(ctx context.Context, host string, grpcPort, httpPort in
 	srv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			middleware.StdLogging,
+			middleware.NewErrorMiddleware(),
 		),
 	)
 
