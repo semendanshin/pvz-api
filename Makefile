@@ -5,6 +5,7 @@ OUT_PATH:=$(CURDIR)/pkg
 LOCAL_BIN:=$(CURDIR)/bin
 
 DATABASE_COMPOSE_FILE = database/db-compose.yaml
+KAFKA_COMPOSE_FILE = kafka/kafka-compose.yaml
 
 cognitive-lint:
 	@echo "Running cognitive complexity linting..."
@@ -47,6 +48,14 @@ coverage:
 run-db:
 	@echo "Running the database..."
 	@docker compose -f $(DATABASE_COMPOSE_FILE) up -d
+
+compose-up:
+	@echo "Running the database and kafka..."
+	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) up -d
+
+compose-down:
+	@echo "Stopping the database and kafka..."
+	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) down
 
 goose-install:
 	go install github.com/pressly/goose/v3/cmd/goose@latest
