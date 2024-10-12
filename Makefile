@@ -21,7 +21,6 @@ lint:
 
 build:
 	@echo "Building the application..."
-	@make lint
 	@go build cmd/hw1/main.go
 
 run:
@@ -130,3 +129,7 @@ generate:
 		mkdir -p vendor.protogen/validate
 		mv vendor.protogen/tmp/validate vendor.protogen/
 		rm -rf vendor.protogen/tmp
+
+deps: install-deps bin-deps
+
+all: deps generate build-and-run
