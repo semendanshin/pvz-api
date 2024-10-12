@@ -105,7 +105,7 @@ func (s *GRPCServer) Run(ctx context.Context, host string, grpcPort, httpPort in
 		return err
 	}
 
-	log.Println("Starting server...")
+	log.Println("Server started")
 
 	// Start the server
 	if err := srv.Serve(lis); err != nil {
