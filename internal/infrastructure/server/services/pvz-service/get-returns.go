@@ -2,13 +2,15 @@ package pvz_service
 
 import (
 	"context"
+	"fmt"
 	"homework/internal/abstractions"
+	"homework/internal/domain"
 	desc "homework/pkg/pvz-service/v1"
 )
 
 func (p *PVZService) GetReturns(ctx context.Context, req *desc.GetReturnsRequest) (*desc.GetReturnsResponse, error) {
 	if err := req.ValidateAll(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}
 
 	var options []abstractions.PagePaginationOptFunc

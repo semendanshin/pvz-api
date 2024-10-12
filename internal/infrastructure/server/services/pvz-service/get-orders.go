@@ -2,6 +2,7 @@ package pvz_service
 
 import (
 	"context"
+	"fmt"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"homework/internal/abstractions"
@@ -44,7 +45,7 @@ func domainToDescOrder(order *domain.PVZOrder) *desc.PVZOrder {
 
 func (p *PVZService) GetOrders(ctx context.Context, req *desc.GetOrdersRequest) (*desc.GetOrdersResponse, error) {
 	if err := req.ValidateAll(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}
 
 	var options []abstractions.GetOrdersOptFunc
