@@ -17,7 +17,7 @@ import (
 
 type EventsRepository interface {
 	// GetPendingEvents returns a list of events that have not been sent yet.
-	GetPendingEvents(ctx context.Context) ([]domain.Event, error)
+	GetPendingEvents(ctx context.Context, limit int) ([]domain.Event, error)
 	// MarkAsSent marks the event as sent.
 	MarkAsSent(ctx context.Context, id uuid.UUID) error
 }
