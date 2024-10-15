@@ -31,14 +31,17 @@ type EventsSender struct {
 	repo   EventsRepository
 	client KafkaClient
 
+	limit int
+
 	done chan struct{}
 }
 
-func NewEventsSender(repo EventsRepository, client KafkaClient) *EventsSender {
+func NewEventsSender(repo EventsRepository, client KafkaClient, limit int) *EventsSender {
 	return &EventsSender{
 		repo:   repo,
 		client: client,
 		done:   make(chan struct{}),
+		limit:  limit,
 	}
 }
 
@@ -64,7 +67,7 @@ func (e *EventsSender) Stop() {
 }
 
 func (e *EventsSender) RunOnce(ctx context.Context) error {
-	events, err := e.repo.GetPendingEvents(ctx)
+	events, err := e.repo.GetPendingEvents(ctx, e.limit)
 	if err != nil {
 		return fmt.Errorf("error getting pending events: %w", err)
 	}

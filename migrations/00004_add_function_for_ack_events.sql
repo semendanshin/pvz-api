@@ -13,7 +13,7 @@ BEGIN
         WHERE sent_at IS NULL
         ORDER BY created_at
         LOOP
-            IF pg_try_advisory_lock(event_record.id) THEN
+            IF pg_try_advisory_lock(hashtext(event_record.id::text)) THEN
                 count := count + 1;
                 RETURN NEXT event_record;
 
@@ -34,7 +34,7 @@ BEGIN
     SET sent_at = NOW()
     WHERE id = event_id;
 
-    PERFORM pg_advisory_unlock(event_id);
+    PERFORM pg_advisory_unlock(hashtext(event_id::text));
 END;
 $$ LANGUAGE plpgsql;
 -- +goose StatementEnd

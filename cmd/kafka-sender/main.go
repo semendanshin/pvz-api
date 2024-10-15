@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"homework/internal/infrastructure/clients/queue/dummy"
+	"homework/internal/infrastructure/repositories/events/pgx"
+	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"log"
 	"os"
 	"os/signal"
@@ -47,7 +50,12 @@ func Run() error {
 		log.Fatal(err)
 	}
 
-	worker := usecases.NewEventsSender(nil, nil)
+	txm := txmanager.NewPGXTXManager(pool)
+	repo := pgx.NewEventsRepository(txm)
+
+	client := dummy.NewDummyEventsSender()
+
+	worker := usecases.NewEventsSender(repo, client, 10)
 
 	go func() {
 		stop := make(chan os.Signal, 1)

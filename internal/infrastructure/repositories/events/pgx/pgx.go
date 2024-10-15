@@ -53,7 +53,7 @@ func (r *EventsRepository) GetPendingEvents(ctx context.Context, limit int) ([]d
 
 	engine := r.manager.GetQueryEngine(ctx)
 
-	var events []domain.Event
+	var events []Event
 
 	if err := pgxscan.Select(ctx, engine, &events, query, limit); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -62,7 +62,12 @@ func (r *EventsRepository) GetPendingEvents(ctx context.Context, limit int) ([]d
 		return nil, err
 	}
 
-	return events, nil
+	result := make([]domain.Event, 0, len(events))
+	for _, event := range events {
+		result = append(result, event.ToDomain())
+	}
+
+	return result, nil
 }
 
 func (r *EventsRepository) MarkAsSent(ctx context.Context, id uuid.UUID) error {
