@@ -8,7 +8,7 @@ import (
 	desc "homework/pkg/pvz-service/v1"
 )
 
-func (p *PVZService) GiveOrdersToClient(ctx context.Context, req *desc.GiveOrderToClientRequest) (*emptypb.Empty, error) {
+func (p *PVZService) GiveOrderToClient(ctx context.Context, req *desc.GiveOrderToClientRequest) (*emptypb.Empty, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}
