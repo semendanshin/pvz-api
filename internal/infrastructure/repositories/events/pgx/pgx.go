@@ -49,13 +49,7 @@ func (r *EventsRepository) Create(ctx context.Context, event domain.Event) error
 }
 
 func (r *EventsRepository) GetPendingEvents(ctx context.Context, limit int) ([]domain.Event, error) {
-	const query = `
-		SELECT id, event_type, payload, created_at, sent_at
-		FROM events
-		WHERE sent_at IS NULL
-		ORDER BY created_at
-		LIMIT $1
-	`
+	const query = `SELECT * FROM get_pending_events($1)`
 
 	engine := r.manager.GetQueryEngine(ctx)
 
@@ -72,11 +66,7 @@ func (r *EventsRepository) GetPendingEvents(ctx context.Context, limit int) ([]d
 }
 
 func (r *EventsRepository) MarkAsSent(ctx context.Context, id uuid.UUID) error {
-	const query = `
-		UPDATE events
-		SET sent_at = NOW()
-		WHERE id = $1
-	`
+	const query = `SELECT mark_event_as_sent($1)`
 
 	engine := r.manager.GetQueryEngine(ctx)
 
