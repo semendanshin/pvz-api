@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"homework/internal/infrastructure/clients/queue/dummy"
+	"github.com/IBM/sarama"
+	"homework/internal/infrastructure/clients/queue/kafka"
+	"homework/internal/infrastructure/clients/queue/kafka/producer"
 	"homework/internal/infrastructure/repositories/events/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"log"
@@ -53,9 +55,22 @@ func Run() error {
 	txm := txmanager.NewPGXTXManager(pool)
 	repo := pgx.NewEventsRepository(txm)
 
-	client := dummy.NewDummyEventsSender()
+	prod, err := producer.NewSyncSaramaProducer(
+		kafka.Config{Brokers: []string{"localhost:9092"}},
+		producer.WithIdempotent(),
+		producer.WithRequiredAcks(sarama.WaitForAll),
+		producer.WithMaxOpenRequests(1),
+		producer.WithMaxRetries(5),
+		producer.WithRetryBackoff(10*time.Millisecond),
+		producer.WithProducerPartitioner(sarama.NewHashPartitioner),
+	)
+	if err != nil {
+		return fmt.Errorf("error creating kafka producer: %w", err)
+	}
 
-	worker := usecases.NewEventsSender(repo, client, 10)
+	client := producer.NewProducer(prod, "pvz.events-log")
+
+	worker := usecases.NewEventsProcessor(repo, client, 10)
 
 	go func() {
 		stop := make(chan os.Signal, 1)

@@ -35,8 +35,8 @@ func (p *PvzOrderFacade) CreateOrder(ctx context.Context, order domain.PVZOrder)
 			"weight":          order.Weight,
 			"packaging":       order.Packaging,
 			"additional_film": order.AdditionalFilm,
-			"received_at":     order.ReceivedAt.Format("2006-01-02 15:04:05"),
-			"storage_time":    order.StorageTime.Milliseconds(),
+			"received_at":     order.ReceivedAt,
+			"storage_time":    order.StorageTime,
 		})
 		if err := p.repo.CreateOrder(ctx, order); err != nil {
 			return err

@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 )
 
 //go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i EventsRepository -s _mock.go -o ./mocks
-//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i KafkaClient -s _mock.go -o ./mocks
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i QueueProducer -s _mock.go -o ./mocks
 
 type EventsRepository interface {
 	// GetPendingEvents returns a list of events that have not been sent yet.
@@ -22,22 +23,22 @@ type EventsRepository interface {
 	MarkAsSent(ctx context.Context, id uuid.UUID) error
 }
 
-type KafkaClient interface {
+type QueueProducer interface {
 	// SendEvent sends an event to Kafka.
 	SendEvent(ctx context.Context, event domain.Event) error
 }
 
-type EventsSender struct {
+type EventsProcessor struct {
 	repo   EventsRepository
-	client KafkaClient
+	client QueueProducer
 
 	limit int
 
 	done chan struct{}
 }
 
-func NewEventsSender(repo EventsRepository, client KafkaClient, limit int) *EventsSender {
-	return &EventsSender{
+func NewEventsProcessor(repo EventsRepository, client QueueProducer, limit int) *EventsProcessor {
+	return &EventsProcessor{
 		repo:   repo,
 		client: client,
 		done:   make(chan struct{}),
@@ -45,7 +46,7 @@ func NewEventsSender(repo EventsRepository, client KafkaClient, limit int) *Even
 	}
 }
 
-func (e *EventsSender) Run(ctx context.Context, interval time.Duration) error {
+func (e *EventsProcessor) Run(ctx context.Context, interval time.Duration) error {
 	ticker := time.NewTicker(interval)
 
 	for {
@@ -62,18 +63,17 @@ func (e *EventsSender) Run(ctx context.Context, interval time.Duration) error {
 	}
 }
 
-func (e *EventsSender) Stop() {
+func (e *EventsProcessor) Stop() {
 	close(e.done)
 }
 
-func (e *EventsSender) RunOnce(ctx context.Context) error {
+func (e *EventsProcessor) RunOnce(ctx context.Context) error {
 	events, err := e.repo.GetPendingEvents(ctx, e.limit)
 	if err != nil {
 		return fmt.Errorf("error getting pending events: %w", err)
 	}
 
 	for _, event := range events {
-		fmt.Println(event)
 		if err := e.processEvent(ctx, event); err != nil {
 			return fmt.Errorf("error processing event: %w", err)
 		}
@@ -82,7 +82,7 @@ func (e *EventsSender) RunOnce(ctx context.Context) error {
 	return nil
 }
 
-func (e *EventsSender) processEvent(ctx context.Context, event domain.Event) error {
+func (e *EventsProcessor) processEvent(ctx context.Context, event domain.Event) error {
 	if err := e.client.SendEvent(ctx, event); err != nil {
 		return fmt.Errorf("error sending event: %w", err)
 	}
@@ -90,6 +90,8 @@ func (e *EventsSender) processEvent(ctx context.Context, event domain.Event) err
 	if err := e.repo.MarkAsSent(ctx, event.ID); err != nil {
 		return fmt.Errorf("error marking event as sent: %w", err)
 	}
+
+	log.Printf("event %s sent\n", event.ID)
 
 	return nil
 }

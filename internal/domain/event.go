@@ -1,11 +1,31 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"time"
 )
 
 type EventType string
+
+func NewEventType(eventType string) (EventType, error) {
+	switch eventType {
+	case EventTypeOrderDeliveryAccepted.String():
+		return EventTypeOrderDeliveryAccepted, nil
+	case EventTypeOrderIssued.String():
+		return EventTypeOrderIssued, nil
+	case EventTypeOrderDeliveryReturned.String():
+		return EventTypeOrderDeliveryReturned, nil
+	case EventTypeOrderReturned.String():
+		return EventTypeOrderReturned, nil
+	default:
+		return EventTypeUnknown, fmt.Errorf("unknown event type %s: %w", eventType, ErrInvalidArgument)
+	}
+}
+
+func (e EventType) String() string {
+	return string(e)
+}
 
 const (
 	EventTypeUnknown               EventType = "unknown"
