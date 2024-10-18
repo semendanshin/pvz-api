@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"homework/internal/abstractions"
-	"homework/internal/domain"
 	"slices"
 	"time"
+
+	"homework/internal/abstractions"
+	"homework/internal/domain"
+
+	_ "github.com/gojuno/minimock/v3"
 )
 
 const (
