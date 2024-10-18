@@ -1,11 +1,11 @@
-package producer
+package kafka
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"homework/internal/domain"
-	"homework/internal/infrastructure/clients/queue/kafka"
 	"homework/internal/usecases"
 
 	"github.com/IBM/sarama"
@@ -26,7 +26,7 @@ func NewProducer(producer sarama.SyncProducer, topic string) *Producer {
 
 // SendEvent sends an event to the queue.
 func (p *Producer) SendEvent(_ context.Context, event domain.Event) error {
-	eventEntity := kafka.NewEvent(event)
+	eventEntity := NewEvent(event)
 
 	data, err := json.Marshal(eventEntity)
 	if err != nil {

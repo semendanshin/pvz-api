@@ -7,7 +7,7 @@ import (
 	"homework/internal/usecases"
 )
 
-var _ usecases.KafkaClient = &EventsSender{}
+var _ usecases.QueueProducer = &EventsSender{}
 
 type EventsSender struct{}
 
