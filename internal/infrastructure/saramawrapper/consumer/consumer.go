@@ -3,18 +3,17 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"homework/internal/infrastructure/saramawrapper"
 	"sync"
 
 	"github.com/IBM/sarama"
-
-	"gitlab.ozon.dev/go/classroom-15/students/week-7-workshop/internal/infra/kafka"
 )
 
 type Consumer struct {
 	consumer sarama.Consumer
 }
 
-func NewConsumer(kafkaConfig kafka.Config, opts ...Option) (*Consumer, error) {
+func NewConsumer(kafkaConfig saramawrapper.Config, opts ...Option) (*Consumer, error) {
 	config := sarama.NewConfig()
 
 	config.Consumer.Return.Errors = false

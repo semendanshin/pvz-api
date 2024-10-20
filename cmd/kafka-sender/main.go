@@ -12,7 +12,6 @@ import (
 	"homework/internal/infrastructure/clients/queue/kafka"
 	"homework/internal/infrastructure/repositories/events/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
-	"homework/internal/infrastructure/sarama-wrapper"
 	"homework/internal/infrastructure/sarama-wrapper/producer"
 	"homework/internal/usecases"
 
@@ -57,7 +56,7 @@ func Run() error {
 	repo := pgx.NewEventsRepository(txm)
 
 	prod, err := producer.NewSyncSaramaProducer(
-		sarama_wrapper.Config{Brokers: []string{"localhost:9092"}},
+		saramawrapper.Config{Brokers: []string{"localhost:9092"}},
 		producer.WithIdempotent(),
 		producer.WithRequiredAcks(sarama.WaitForAll),
 		producer.WithMaxOpenRequests(1),

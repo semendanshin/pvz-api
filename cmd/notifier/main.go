@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homework/internal/infrastructure/clients/queue/kafka"
-	"homework/internal/infrastructure/sarama-wrapper/consumer_group"
+	"homework/internal/infrastructure/saramawrapper/consumer_group"
 	"log"
 	"os"
 	"sync"

@@ -1,4 +1,4 @@
-package sarama_wrapper
+package saramawrapper
 
 type Config struct {
 	Brokers []string

@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
-	"homework/internal/infrastructure/sarama-wrapper/consumer_group"
+	"homework/internal/infrastructure/saramawrapper/consumer_group"
 	"log"
 )
 
