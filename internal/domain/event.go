@@ -52,3 +52,35 @@ func NewEvent(eventType EventType, payload map[string]interface{}) Event {
 		SentAt:    time.Time{},
 	}
 }
+
+func NewOrderDeliveryAcceptedEvent(orderID, pvzID, recipientID string, cost, weight int, packaging PackagingType, additionalFilm bool, receivedAt time.Time, storageTime time.Duration) Event {
+	return NewEvent(EventTypeOrderDeliveryAccepted, map[string]interface{}{
+		"order_id":        orderID,
+		"pvz_id":          pvzID,
+		"recipient_id":    recipientID,
+		"cost":            cost,
+		"weight":          weight,
+		"packaging":       packaging,
+		"additional_film": additionalFilm,
+		"received_at":     receivedAt,
+		"storage_time":    storageTime,
+	})
+}
+
+func NewOrderIssuedEvent(orderID string) Event {
+	return NewEvent(EventTypeOrderIssued, map[string]interface{}{
+		"order_id": orderID,
+	})
+}
+
+func NewOrderDeliveryReturnedEvent(orderID string) Event {
+	return NewEvent(EventTypeOrderDeliveryReturned, map[string]interface{}{
+		"order_id": orderID,
+	})
+}
+
+func NewOrderReturnedEvent(orderID string) Event {
+	return NewEvent(EventTypeOrderReturned, map[string]interface{}{
+		"order_id": orderID,
+	})
+}

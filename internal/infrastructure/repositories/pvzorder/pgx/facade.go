@@ -27,17 +27,17 @@ func NewPgxPvzOrderFacade(manager *txmanager.PGXTXManager) *PvzOrderFacade {
 
 func (p *PvzOrderFacade) CreateOrder(ctx context.Context, order domain.PVZOrder) error {
 	return p.manager.RunReadCommittedTransaction(ctx, func(ctx context.Context) error {
-		event := domain.NewEvent(domain.EventTypeOrderDeliveryAccepted, map[string]interface{}{
-			"order_id":        order.OrderID,
-			"pvz_id":          order.PVZID,
-			"recipient_id":    order.RecipientID,
-			"cost":            order.Cost,
-			"weight":          order.Weight,
-			"packaging":       order.Packaging,
-			"additional_film": order.AdditionalFilm,
-			"received_at":     order.ReceivedAt,
-			"storage_time":    order.StorageTime,
-		})
+		event := domain.NewOrderDeliveryAcceptedEvent(
+			order.OrderID,
+			order.PVZID,
+			order.RecipientID,
+			order.Cost,
+			order.Weight,
+			order.Packaging,
+			order.AdditionalFilm,
+			order.ReceivedAt,
+			order.StorageTime,
+		)
 		if err := p.repo.CreateOrder(ctx, order); err != nil {
 			return err
 		}
@@ -47,9 +47,7 @@ func (p *PvzOrderFacade) CreateOrder(ctx context.Context, order domain.PVZOrder)
 
 func (p *PvzOrderFacade) DeleteOrder(ctx context.Context, orderID string) error {
 	return p.manager.RunReadCommittedTransaction(ctx, func(ctx context.Context) error {
-		event := domain.NewEvent(domain.EventTypeOrderDeliveryReturned, map[string]interface{}{
-			"order_id": orderID,
-		})
+		event := domain.NewOrderDeliveryReturnedEvent(orderID)
 		if err := p.repo.DeleteOrder(ctx, orderID); err != nil {
 			return err
 		}
@@ -59,9 +57,7 @@ func (p *PvzOrderFacade) DeleteOrder(ctx context.Context, orderID string) error 
 
 func (p *PvzOrderFacade) SetOrderIssued(ctx context.Context, orderID string) error {
 	return p.manager.RunReadCommittedTransaction(ctx, func(ctx context.Context) error {
-		event := domain.NewEvent(domain.EventTypeOrderIssued, map[string]interface{}{
-			"order_id": orderID,
-		})
+		event := domain.NewOrderIssuedEvent(orderID)
 		if err := p.repo.SetOrderIssued(ctx, orderID); err != nil {
 			return err
 		}
@@ -71,9 +67,7 @@ func (p *PvzOrderFacade) SetOrderIssued(ctx context.Context, orderID string) err
 
 func (p *PvzOrderFacade) SetOrderReturned(ctx context.Context, orderID string) error {
 	return p.manager.RunSerializableTransaction(ctx, func(ctx context.Context) error {
-		event := domain.NewEvent(domain.EventTypeOrderReturned, map[string]interface{}{
-			"order_id": orderID,
-		})
+		event := domain.NewOrderReturnedEvent(orderID)
 		if err := p.repo.SetOrderReturned(ctx, orderID); err != nil {
 			return err
 		}
