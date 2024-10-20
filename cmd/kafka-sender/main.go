@@ -12,7 +12,8 @@ import (
 	"homework/internal/infrastructure/clients/queue/kafka"
 	"homework/internal/infrastructure/repositories/events/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
-	"homework/internal/infrastructure/sarama-wrapper/producer"
+	"homework/internal/infrastructure/saramawrapper"
+	"homework/internal/infrastructure/saramawrapper/producer"
 	"homework/internal/usecases"
 
 	"github.com/IBM/sarama"
@@ -30,6 +31,26 @@ func loadPostgresURL() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDatabase)
 }
 
+func loadKafkaSettings() (brokers []string, topic string, group string) {
+	broker := os.Getenv("KAFKA_BROKERS")
+	if broker == "" {
+		broker = "localhost:9092"
+	}
+	brokers = []string{broker}
+
+	topic = os.Getenv("KAFKA_TOPIC")
+	if topic == "" {
+		topic = "pvz.events-log"
+	}
+
+	group = os.Getenv("KAFKA_GROUP")
+	if group == "" {
+		group = "events-group"
+	}
+
+	return
+}
+
 func Run() error {
 	err := godotenv.Load()
 	if err != nil {
@@ -37,6 +58,8 @@ func Run() error {
 	}
 
 	postgresURL := loadPostgresURL()
+
+	brokers, topic, _ := loadKafkaSettings()
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -56,7 +79,7 @@ func Run() error {
 	repo := pgx.NewEventsRepository(txm)
 
 	prod, err := producer.NewSyncSaramaProducer(
-		saramawrapper.Config{Brokers: []string{"localhost:9092"}},
+		saramawrapper.Config{Brokers: brokers},
 		producer.WithIdempotent(),
 		producer.WithRequiredAcks(sarama.WaitForAll),
 		producer.WithMaxOpenRequests(1),
@@ -68,7 +91,7 @@ func Run() error {
 		return fmt.Errorf("error creating kafka producer: %w", err)
 	}
 
-	client := kafka.NewProducer(prod, "pvz.events-log")
+	client := kafka.NewProducer(prod, topic)
 
 	worker := usecases.NewEventsProcessor(repo, client, 10)
 

@@ -10,17 +10,39 @@ import (
 	"sync"
 )
 
+func loadKafkaSettings() (brokers []string, topic string, group string) {
+	broker := os.Getenv("KAFKA_BROKERS")
+	if broker == "" {
+		broker = "localhost:9092"
+	}
+	brokers = []string{broker}
+
+	topic = os.Getenv("KAFKA_TOPIC")
+	if topic == "" {
+		topic = "pvz.events-log"
+	}
+
+	group = os.Getenv("KAFKA_GROUP")
+	if group == "" {
+		group = "test-group"
+	}
+
+	return
+}
+
 func Run() error {
 	wg := &sync.WaitGroup{}
+
+	brokers, topic, group := loadKafkaSettings()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	handler := consumer_group.NewConsumerGroupHandler(kafka.NewEventsHandler())
 	cg, err := consumer_group.NewConsumerGroup(
-		[]string{"localhost:9092"},
-		"test-group",
-		[]string{"pvz.events-log"},
+		brokers,
+		group,
+		[]string{topic},
 		handler,
 	)
 	if err != nil {
