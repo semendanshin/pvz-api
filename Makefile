@@ -6,6 +6,7 @@ LOCAL_BIN:=$(CURDIR)/bin
 
 DATABASE_COMPOSE_FILE = database/db-compose.yaml
 KAFKA_COMPOSE_FILE = kafka/kafka-compose.yaml
+NOTIFIER_COMPOSE_FILE = docker/notifier/compose.yaml
 
 cognitive-lint:
 	@echo "Running cognitive complexity linting..."
@@ -51,11 +52,11 @@ run-db:
 
 compose-up:
 	@echo "Running the database and kafka..."
-	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) up -d
+	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) -f $(NOTIFIER_COMPOSE_FILE) up -d --build
 
 compose-down:
 	@echo "Stopping the database and kafka..."
-	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) down
+	@docker compose -f $(DATABASE_COMPOSE_FILE) -f $(KAFKA_COMPOSE_FILE) -f $(NOTIFIER_COMPOSE_FILE) down
 
 goose-install:
 	go install github.com/pressly/goose/v3/cmd/goose@latest
@@ -75,7 +76,6 @@ squawk-install:
 squawk-lint:
 	@echo "Running squawk linting..."
 	@squawk -c .squawk.toml migrations/*.sql
-
 
 # grpc
 

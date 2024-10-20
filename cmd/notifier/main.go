@@ -11,7 +11,7 @@ import (
 )
 
 func loadKafkaSettings() (brokers []string, topic string, group string) {
-	broker := os.Getenv("KAFKA_BROKERS")
+	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		broker = "localhost:9092"
 	}
@@ -34,6 +34,7 @@ func Run() error {
 	wg := &sync.WaitGroup{}
 
 	brokers, topic, group := loadKafkaSettings()
+	log.Printf("brokers: %v, topic: %s, group: %s\n", brokers, topic, group)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

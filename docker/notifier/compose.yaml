@@ -1,0 +1,13 @@
+services:
+  notifier:
+    container_name: pvz-notifier
+    build:
+      context: ./..
+      dockerfile: docker/notifier/Dockerfile
+      target: final
+    env_file:
+      - ../docker/notifier/.env
+    depends_on:
+      - kafka0
+    links:
+      - kafka0
