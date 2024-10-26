@@ -7,6 +7,7 @@ import (
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	"homework/internal/usecases"
+	"log"
 	"time"
 )
 
@@ -33,6 +34,7 @@ func (P PVZOrder) GetOrders(ctx context.Context, userID string, options ...abstr
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetOrders:%s:%v", userID, options)
+	log.Printf("key: %v\n", key)
 
 	v, ok := P.cache.Get(key)
 
@@ -53,6 +55,7 @@ func (P PVZOrder) GetReturns(ctx context.Context, options ...abstractions.PagePa
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetReturns:%v", options)
+	log.Printf("key: %v\n", key)
 
 	v, ok := P.cache.Get(key)
 
@@ -73,6 +76,7 @@ func (P PVZOrder) SetGetOrders(ctx context.Context, userID string, orders []doma
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetOrders:%s:%v", userID, options)
+	log.Printf("key: %v\n", key)
 
 	P.cache.Set(key, orders)
 
@@ -84,6 +88,7 @@ func (P PVZOrder) SetGetReturns(ctx context.Context, orders []domain.PVZOrder, o
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetReturns:%v", options)
+	log.Printf("key: %v\n", key)
 
 	P.cache.Set(key, orders)
 
@@ -95,6 +100,7 @@ func (P PVZOrder) GetOrder(ctx context.Context, orderID string) (domain.PVZOrder
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetOrder:%s", orderID)
+	log.Printf("key: %v\n", key)
 
 	v, ok := P.cache.Get(key)
 
@@ -115,6 +121,7 @@ func (P PVZOrder) SetOrder(ctx context.Context, order domain.PVZOrder) error {
 	defer span.Finish()
 
 	key := fmt.Sprintf("GetOrder:%s", order.OrderID)
+	log.Printf("key: %v\n", key)
 
 	P.cache.Set(key, order)
 

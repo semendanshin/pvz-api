@@ -17,6 +17,7 @@ import (
 	"homework/internal/usecases/packager/strategies"
 	"log"
 	"os"
+	"time"
 )
 
 func loadPostgresURL() string {
@@ -77,7 +78,7 @@ func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase
 		},
 	)
 
-	cache := inmemmory.NewPVZOrder(10, 100, inmemmory.NewLRUInvalidationStrategy[string, interface{}]())
+	cache := inmemmory.NewPVZOrder(time.Second, 100, inmemmory.NewLRUInvalidationStrategy[string, interface{}]())
 
 	return usecases.NewPVZOrderUseCase(
 		pvzOrderRepoFacade,

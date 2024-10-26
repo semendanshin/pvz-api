@@ -1,6 +1,7 @@
 package inmemmory
 
 import (
+	"log"
 	"slices"
 	"sync"
 	"time"
@@ -40,6 +41,7 @@ type InvalidationStrategy[K comparable, V any] interface {
 func (c *Cache[K, V]) Set(key K, value V) {
 	c.m.Lock()
 	defer c.m.Unlock()
+	log.Printf("setting cache for key %v\n", key)
 	c.items[key] = NewCacheItem(key, value)
 }
 
@@ -55,13 +57,17 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 
 	item, ok := c.items[key]
 	if !ok {
+		log.Printf("cache miss for key %v\n", key)
 		return zeroValue, false
 	}
 
-	if time.Since(item.createTime) > c.ttl {
+	if item.createTime.Add(c.ttl).Before(time.Now()) {
+		log.Printf("cache miss for key %v\n", key)
 		delete(c.items, key)
 		return zeroValue, false
 	}
+
+	log.Printf("cache hit for key %v\n", key)
 
 	item.usages++
 	item.lastAccessTime = time.Now()
@@ -78,6 +84,7 @@ func (c *Cache[K, V]) Delete(key K) {
 func (c *Cache[K, V]) invalidate() {
 	c.m.Lock()
 	defer c.m.Unlock()
+	log.Printf("invalidating cache\n")
 	c.invalidationStrategy.Invalidate(c, len(c.items)-c.maxItems)
 }
 
