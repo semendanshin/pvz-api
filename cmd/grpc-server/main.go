@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	"homework/internal/infrastructure/clients/cache/inmemmory"
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"homework/internal/infrastructure/server"
@@ -76,10 +77,13 @@ func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase
 		},
 	)
 
+	cache := inmemmory.NewPVZOrder(10, 100, inmemmory.NewLRUInvalidationStrategy[string, interface{}]())
+
 	return usecases.NewPVZOrderUseCase(
 		pvzOrderRepoFacade,
 		orderPackager,
 		pvzID,
+		cache,
 	)
 }
 

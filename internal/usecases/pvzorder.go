@@ -46,7 +46,7 @@ type PVZOrderCache interface {
 	SetGetOrders(ctx context.Context, userID string, orders []domain.PVZOrder, options ...abstractions.GetOrdersOptFunc) error
 	SetGetReturns(ctx context.Context, orders []domain.PVZOrder, options ...abstractions.PagePaginationOptFunc) error
 	GetOrder(ctx context.Context, orderID string) (domain.PVZOrder, error, bool)
-	SetOrder(ctx context.Context, order domain.PVZOrder) (domain.PVZOrder, error)
+	SetOrder(ctx context.Context, order domain.PVZOrder) error
 }
 
 // PVZOrderUseCase is a use case for order operations
@@ -58,12 +58,36 @@ type PVZOrderUseCase struct {
 }
 
 // NewPVZOrderUseCase creates a new order use case
-func NewPVZOrderUseCase(repo PVZOrderRepository, packager OrderPackagerInterface, currentPVZID string) *PVZOrderUseCase {
+func NewPVZOrderUseCase(repo PVZOrderRepository, packager OrderPackagerInterface, currentPVZID string, cache PVZOrderCache) *PVZOrderUseCase {
 	return &PVZOrderUseCase{
 		repo:         repo,
 		packager:     packager,
 		currentPVZID: currentPVZID,
+		cache:        cache,
 	}
+}
+
+func (P *PVZOrderUseCase) getOrder(ctx context.Context, orderID string) (domain.PVZOrder, error) {
+	order, err, ok := P.cache.GetOrder(ctx, orderID)
+	if err != nil {
+		return domain.PVZOrder{}, err
+	}
+
+	if ok {
+		return order, nil
+	}
+
+	order, err = P.repo.GetOrder(ctx, orderID)
+	if err != nil {
+		return domain.PVZOrder{}, err
+	}
+
+	err = P.cache.SetOrder(ctx, order)
+	if err != nil {
+		return domain.PVZOrder{}, err
+	}
+
+	return order, nil
 }
 
 func (P *PVZOrderUseCase) checkOrderID(ctx context.Context, orderID string) error {
@@ -130,7 +154,7 @@ func (P *PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID strin
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.ReturnOrderDelivery")
 	defer span.Finish()
 
-	order, err := P.repo.GetOrder(ctx, orderID)
+	order, err := P.getOrder(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -163,7 +187,7 @@ func (P *PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []stri
 
 	var err error
 	for i, orderID := range orderIDs {
-		orders[i], err = P.repo.GetOrder(ctx, orderID)
+		orders[i], err = P.getOrder(ctx, orderID)
 		if err != nil {
 			return err
 		}
@@ -283,7 +307,7 @@ func (P *PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID stri
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.AcceptReturn")
 	defer span.Finish()
 
-	order, err := P.repo.GetOrder(ctx, orderID)
+	order, err := P.getOrder(ctx, orderID)
 	if err != nil {
 		return err
 	}
