@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"homework/internal/metrics"
 	"slices"
 	"time"
 
@@ -197,6 +198,7 @@ func (P PVZOrderUseCase) setOrdersIssued(ctx context.Context, orders []domain.PV
 		if err != nil {
 			return err
 		}
+		metrics.IncOrdersIssued(P.currentPVZID)
 	}
 	return nil
 }

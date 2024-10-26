@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/swaggest/swgui/v5emb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -69,6 +70,9 @@ func (s *GRPCServer) Run(ctx context.Context, host string, grpcPort, httpPort in
 		"/swagger",
 		"/docs/",
 	))
+
+	httpMux.Handle("/metrics", promhttp.Handler())
+
 	httpMux.Handle("/", gatewayMux)
 
 	httpSrv := &http.Server{

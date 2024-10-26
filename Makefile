@@ -77,6 +77,11 @@ squawk-lint:
 	@echo "Running squawk linting..."
 	@squawk -c .squawk.toml migrations/*.sql
 
+.PHONY: run-prometheus
+run-prometheus:
+	prometheus --config.file prometheus/prometheus.yaml
+
+
 # grpc
 
 bin-deps: .vendor-proto
