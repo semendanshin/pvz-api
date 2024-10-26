@@ -3,6 +3,7 @@ package pvz_service
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"homework/internal/domain"
 	desc "homework/pkg/pvz-service/v1"
@@ -22,6 +23,9 @@ func packagingTypeFromProto(packaging desc.PackagingType) domain.PackagingType {
 }
 
 func (p *PVZService) AcceptOrderDelivery(ctx context.Context, req *desc.AcceptOrderDeliveryRequest) (*emptypb.Empty, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZService.AcceptOrderDelivery")
+	defer span.Finish()
+
 	if err := req.ValidateAll(); err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}

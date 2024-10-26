@@ -3,6 +3,7 @@ package pvz_service
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"homework/internal/abstractions"
@@ -44,6 +45,9 @@ func domainToDescOrder(order *domain.PVZOrder) *desc.PVZOrder {
 }
 
 func (p *PVZService) GetOrders(ctx context.Context, req *desc.GetOrdersRequest) (*desc.GetOrdersResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZService.GetOrders")
+	defer span.Finish()
+
 	if err := req.ValidateAll(); err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}

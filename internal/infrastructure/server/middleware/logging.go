@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -10,6 +11,9 @@ import (
 )
 
 func StdLogging(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "server.middleware.Logging")
+	defer span.Finish()
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		log.Printf("[interceptor.Logging] method: %s; metadata: %v", info.FullMethod, md)

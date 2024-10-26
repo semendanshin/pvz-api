@@ -10,6 +10,7 @@ import (
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"homework/internal/infrastructure/server"
+	"homework/internal/tracer"
 	"homework/internal/usecases"
 	"homework/internal/usecases/packager"
 	"homework/internal/usecases/packager/strategies"
@@ -43,6 +44,8 @@ func Run() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	tracer.MustSetup(ctx, "pvz-order-service")
 
 	pool, err := pgxpool.New(ctx, postgresURL)
 	if err != nil {

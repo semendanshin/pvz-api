@@ -3,12 +3,16 @@ package pvz_service
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
 	desc "homework/pkg/pvz-service/v1"
 )
 
 func (p *PVZService) GetReturns(ctx context.Context, req *desc.GetReturnsRequest) (*desc.GetReturnsResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZService.GetReturns")
+	defer span.Finish()
+
 	if err := req.ValidateAll(); err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidArgument, err)
 	}

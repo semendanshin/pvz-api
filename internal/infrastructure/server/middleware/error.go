@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"github.com/opentracing/opentracing-go"
 	"log"
 
 	"homework/internal/domain"
@@ -14,6 +15,9 @@ import (
 
 func NewErrorMiddleware() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+		span, ctx := opentracing.StartSpanFromContext(ctx, "server.middleware.Error")
+		defer span.Finish()
+
 		resp, err = handler(ctx, req)
 		if err != nil {
 			if errors.Is(err, domain.ErrNotFound) {

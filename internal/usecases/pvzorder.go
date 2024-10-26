@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"homework/internal/metrics"
 	"slices"
 	"time"
@@ -94,6 +95,9 @@ func (P *PVZOrderUseCase) packageOrder(order domain.PVZOrder, packaging domain.P
 
 // AcceptOrderDelivery accepts order delivery
 func (P *PVZOrderUseCase) AcceptOrderDelivery(ctx context.Context, orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.AcceptOrderDelivery")
+	defer span.Finish()
+
 	if err := P.checkOrderID(ctx, orderID); err != nil {
 		return err
 	}
@@ -123,6 +127,9 @@ func (P *PVZOrderUseCase) AcceptOrderDelivery(ctx context.Context, orderID, reci
 
 // ReturnOrderDelivery returns order delivery
 func (P *PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.ReturnOrderDelivery")
+	defer span.Finish()
+
 	order, err := P.repo.GetOrder(ctx, orderID)
 	if err != nil {
 		return err
@@ -145,6 +152,9 @@ func (P *PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID strin
 
 // GiveOrderToClient gives order to client
 func (P *PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.GiveOrderToClient")
+	defer span.Finish()
+
 	if len(orderIDs) == 0 {
 		return fmt.Errorf("%w: orderIDs is empty", domain.ErrInvalidArgument)
 	}
@@ -215,6 +225,9 @@ func (P *PVZOrderUseCase) setOrdersIssued(ctx context.Context, orders []domain.P
 
 // GetOrders gets orders
 func (P *PVZOrderUseCase) GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.GetOrders")
+	defer span.Finish()
+
 	if slices.ContainsFunc(options, func(optFunc abstractions.GetOrdersOptFunc) bool {
 		opts := &abstractions.GetOrdersOptions{}
 		_ = optFunc(opts)
@@ -267,6 +280,9 @@ func validateAcceptReturn(userID string, order domain.PVZOrder) error {
 
 // AcceptReturn accepts return
 func (P *PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.AcceptReturn")
+	defer span.Finish()
+
 	order, err := P.repo.GetOrder(ctx, orderID)
 	if err != nil {
 		return err
@@ -281,6 +297,9 @@ func (P *PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID stri
 
 // GetReturns gets returns
 func (P *PVZOrderUseCase) GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PVZOrderUseCase.GetReturns")
+	defer span.Finish()
+
 	orders, err, ok := P.cache.GetReturns(ctx, options...)
 	if err != nil {
 		return nil, err
