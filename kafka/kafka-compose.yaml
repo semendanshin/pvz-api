@@ -1,0 +1,45 @@
+services:
+  kafka-ui:
+    container_name: pvz-kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+  kafka0:
+    container_name: pvz-kafka
+    image: confluentinc/cp-kafka:7.7.1.arm64
+    ports:
+      - "9092:9092"
+    volumes:
+      - pvz_kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://kafka0:29092,CONTROLLER://kafka0:29093,PLAINTEXT_HOST://:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka0:29093"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+  kafka-init:
+    container_name: pvz-kafka-init
+    image: confluentinc/cp-kafka:7.7.1.arm64
+    volumes:
+      - ${PWD}/kafka/init.sh:/home/appuser/init.sh
+    depends_on:
+      - kafka0
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+        cub kafka-ready -b kafka0:29092 1 30 && \
+        sh init.sh'"
+
+volumes:
+    pvz_kafka_data:
+
+
