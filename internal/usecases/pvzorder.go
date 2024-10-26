@@ -39,11 +39,21 @@ type OrderPackagerInterface interface {
 	PackageOrder(order domain.PVZOrder, packagingType domain.PackagingType) (domain.PVZOrder, error)
 }
 
+type PVZOrderCache interface {
+	GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error, bool)
+	GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error, bool)
+	SetGetOrders(ctx context.Context, userID string, orders []domain.PVZOrder, options ...abstractions.GetOrdersOptFunc) error
+	SetGetReturns(ctx context.Context, orders []domain.PVZOrder, options ...abstractions.PagePaginationOptFunc) error
+	GetOrder(ctx context.Context, orderID string) (domain.PVZOrder, error, bool)
+	SetOrder(ctx context.Context, order domain.PVZOrder) (domain.PVZOrder, error)
+}
+
 // PVZOrderUseCase is a use case for order operations
 type PVZOrderUseCase struct {
 	repo         PVZOrderRepository
 	packager     OrderPackagerInterface
 	currentPVZID string
+	cache        PVZOrderCache
 }
 
 // NewPVZOrderUseCase creates a new order use case
@@ -55,7 +65,7 @@ func NewPVZOrderUseCase(repo PVZOrderRepository, packager OrderPackagerInterface
 	}
 }
 
-func (P PVZOrderUseCase) checkOrderID(ctx context.Context, orderID string) error {
+func (P *PVZOrderUseCase) checkOrderID(ctx context.Context, orderID string) error {
 	_, err := P.repo.GetOrder(ctx, orderID)
 	if err == nil {
 		return fmt.Errorf("%w: order already exists", domain.ErrAlreadyExists)
@@ -66,7 +76,7 @@ func (P PVZOrderUseCase) checkOrderID(ctx context.Context, orderID string) error
 	return nil
 }
 
-func (P PVZOrderUseCase) packageOrder(order domain.PVZOrder, packaging domain.PackagingType, additionalFilm bool) (domain.PVZOrder, error) {
+func (P *PVZOrderUseCase) packageOrder(order domain.PVZOrder, packaging domain.PackagingType, additionalFilm bool) (domain.PVZOrder, error) {
 	order, err := P.packager.PackageOrder(order, packaging)
 	if err != nil {
 		return domain.PVZOrder{}, err
@@ -83,7 +93,7 @@ func (P PVZOrderUseCase) packageOrder(order domain.PVZOrder, packaging domain.Pa
 }
 
 // AcceptOrderDelivery accepts order delivery
-func (P PVZOrderUseCase) AcceptOrderDelivery(ctx context.Context, orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
+func (P *PVZOrderUseCase) AcceptOrderDelivery(ctx context.Context, orderID, recipientID string, storageTime time.Duration, cost, weight int, packaging domain.PackagingType, additionalFilm bool) error {
 	if err := P.checkOrderID(ctx, orderID); err != nil {
 		return err
 	}
@@ -112,7 +122,7 @@ func (P PVZOrderUseCase) AcceptOrderDelivery(ctx context.Context, orderID, recip
 }
 
 // ReturnOrderDelivery returns order delivery
-func (P PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID string) error {
+func (P *PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID string) error {
 	order, err := P.repo.GetOrder(ctx, orderID)
 	if err != nil {
 		return err
@@ -134,7 +144,7 @@ func (P PVZOrderUseCase) ReturnOrderDelivery(ctx context.Context, orderID string
 }
 
 // GiveOrderToClient gives order to client
-func (P PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []string) error {
+func (P *PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []string) error {
 	if len(orderIDs) == 0 {
 		return fmt.Errorf("%w: orderIDs is empty", domain.ErrInvalidArgument)
 	}
@@ -152,7 +162,7 @@ func (P PVZOrderUseCase) GiveOrderToClient(ctx context.Context, orderIDs []strin
 	return P.processOrders(ctx, orders)
 }
 
-func (P PVZOrderUseCase) processOrders(ctx context.Context, orders []domain.PVZOrder) error {
+func (P *PVZOrderUseCase) processOrders(ctx context.Context, orders []domain.PVZOrder) error {
 	userID := orders[0].RecipientID
 
 	if err := validateGiveOrdersToClient(orders, P.currentPVZID, userID); err != nil {
@@ -192,7 +202,7 @@ func validateGiveOrderToClient(order domain.PVZOrder, currentPVZID string) error
 	return nil
 }
 
-func (P PVZOrderUseCase) setOrdersIssued(ctx context.Context, orders []domain.PVZOrder) error {
+func (P *PVZOrderUseCase) setOrdersIssued(ctx context.Context, orders []domain.PVZOrder) error {
 	for _, order := range orders {
 		err := P.repo.SetOrderIssued(ctx, order.OrderID)
 		if err != nil {
@@ -204,7 +214,7 @@ func (P PVZOrderUseCase) setOrdersIssued(ctx context.Context, orders []domain.PV
 }
 
 // GetOrders gets orders
-func (P PVZOrderUseCase) GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
+func (P *PVZOrderUseCase) GetOrders(ctx context.Context, userID string, options ...abstractions.GetOrdersOptFunc) ([]domain.PVZOrder, error) {
 	if slices.ContainsFunc(options, func(optFunc abstractions.GetOrdersOptFunc) bool {
 		opts := &abstractions.GetOrdersOptions{}
 		_ = optFunc(opts)
@@ -212,7 +222,27 @@ func (P PVZOrderUseCase) GetOrders(ctx context.Context, userID string, options .
 	}) {
 		options = append(options, abstractions.WithPVZID(P.currentPVZID))
 	}
-	return P.repo.GetOrders(ctx, userID, options...)
+
+	orders, err, ok := P.cache.GetOrders(ctx, userID, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok {
+		return orders, nil
+	}
+
+	orders, err = P.repo.GetOrders(ctx, userID, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	err = P.cache.SetGetOrders(ctx, userID, orders, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
 }
 
 func validateAcceptReturn(userID string, order domain.PVZOrder) error {
@@ -236,7 +266,7 @@ func validateAcceptReturn(userID string, order domain.PVZOrder) error {
 }
 
 // AcceptReturn accepts return
-func (P PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID string) error {
+func (P *PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID string) error {
 	order, err := P.repo.GetOrder(ctx, orderID)
 	if err != nil {
 		return err
@@ -250,6 +280,25 @@ func (P PVZOrderUseCase) AcceptReturn(ctx context.Context, userID, orderID strin
 }
 
 // GetReturns gets returns
-func (P PVZOrderUseCase) GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
-	return P.repo.GetReturns(ctx, options...)
+func (P *PVZOrderUseCase) GetReturns(ctx context.Context, options ...abstractions.PagePaginationOptFunc) ([]domain.PVZOrder, error) {
+	orders, err, ok := P.cache.GetReturns(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok {
+		return orders, nil
+	}
+
+	orders, err = P.repo.GetReturns(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	err = P.cache.SetGetReturns(ctx, orders, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
 }
