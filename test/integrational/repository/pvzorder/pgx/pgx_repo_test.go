@@ -6,12 +6,13 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"homework/internal/abstractions"
 	"testing"
 	"time"
+
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 
 	"homework/internal/domain"
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"
@@ -140,6 +141,12 @@ func setupSuite(ctx context.Context, t *testing.T) (*pgxpool.Pool, func()) {
 }
 
 func TestPGXRepository_CreateOrder(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -171,6 +178,12 @@ func TestPGXRepository_CreateOrder(t *testing.T) {
 }
 
 func TestPGXRepository_DeleteOrder(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -190,6 +203,12 @@ func TestPGXRepository_DeleteOrder(t *testing.T) {
 }
 
 func TestPGXRepository_SetOrderIssued(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -209,6 +228,12 @@ func TestPGXRepository_SetOrderIssued(t *testing.T) {
 }
 
 func TestPGXRepository_SetOrderReturned(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -228,6 +253,12 @@ func TestPGXRepository_SetOrderReturned(t *testing.T) {
 }
 
 func TestPGXRepository_GetOrders(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -310,6 +341,12 @@ func TestPGXRepository_GetOrders(t *testing.T) {
 }
 
 func TestPGXRepository_GetOrder(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -372,6 +409,12 @@ func TestPGXRepository_GetOrder(t *testing.T) {
 }
 
 func TestPGXRepository_GetReturns(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

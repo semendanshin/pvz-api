@@ -3,3 +3,4 @@
 vendor.protogen
 bin
 .DS_Store
+data

@@ -3,12 +3,13 @@ package usecases
 import (
 	"context"
 	"errors"
-	"github.com/gojuno/minimock/v3"
-	"github.com/stretchr/testify/assert"
 	"homework/internal/domain"
 	"homework/internal/usecases/mocks"
 	"testing"
 	"time"
+
+	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
@@ -28,16 +29,10 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	ctrl := minimock.NewController(t)
-	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
-	packagerMock := mocks.NewOrderPackagerInterfaceMock(ctrl)
-
-	useCase := NewPVZOrderUseCase(repoMock, packagerMock, pvzID)
-
 	tests := []struct {
 		name    string
 		args    args
-		setup   func()
+		setup   func(repoMock *mocks.PVZOrderRepositoryMock, packagerMock *mocks.OrderPackagerInterfaceMock, cacheMock *mocks.PVZOrderCacheMock)
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -46,12 +41,12 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 				orderID:        "orderID",
 				recipientID:    "recipientID",
 				storageTime:    1 * time.Hour,
-				cost:           100.00,
-				weight:         1.000,
+				cost:           100,
+				weight:         1,
 				packaging:      domain.PackagingTypeBox,
 				additionalFilm: false,
 			},
-			setup: func() {
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, packagerMock *mocks.OrderPackagerInterfaceMock, _ *mocks.PVZOrderCacheMock) {
 				repoMock.GetOrderMock.Return(domain.PVZOrder{}, domain.ErrNotFound)
 				packagerMock.PackageOrderMock.Return(domain.PVZOrder{}, nil)
 				repoMock.CreateOrderMock.Return(nil)
@@ -64,14 +59,13 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 				orderID:        "orderID",
 				recipientID:    "recipientID",
 				storageTime:    1 * time.Hour,
-				cost:           100.00,
-				weight:         1.000,
+				cost:           100,
+				weight:         1,
 				packaging:      domain.PackagingTypeBox,
 				additionalFilm: false,
 			},
-			setup: func() {
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, _ *mocks.OrderPackagerInterfaceMock, _ *mocks.PVZOrderCacheMock) {
 				repoMock.GetOrderMock.Return(domain.PVZOrder{}, nil)
-
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrAlreadyExists)
@@ -83,14 +77,13 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 				orderID:        "orderID",
 				recipientID:    "recipientID",
 				storageTime:    1 * time.Hour,
-				cost:           100.00,
-				weight:         1.000,
+				cost:           100,
+				weight:         1,
 				packaging:      domain.PackagingTypeFilm,
 				additionalFilm: true,
 			},
-			setup: func() {
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, _ *mocks.OrderPackagerInterfaceMock, _ *mocks.PVZOrderCacheMock) {
 				repoMock.GetOrderMock.Return(domain.PVZOrder{}, domain.ErrNotFound)
-
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -99,15 +92,17 @@ func TestPVZOrderUseCase_AcceptOrderDelivery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := useCase.AcceptOrderDelivery(
-				ctx,
-				tt.args.orderID, tt.args.recipientID, tt.args.storageTime, tt.args.cost, tt.args.weight, tt.args.packaging, tt.args.additionalFilm,
-			)
+			t.Parallel()
+			ctrl := minimock.NewController(t)
+			repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
+			packagerMock := mocks.NewOrderPackagerInterfaceMock(ctrl)
+			cacheMock := mocks.NewPVZOrderCacheMock(ctrl)
+			uc := NewPVZOrderUseCase(repoMock, packagerMock, pvzID, cacheMock)
+			tt.setup(repoMock, packagerMock, cacheMock)
+			err := uc.AcceptOrderDelivery(ctx, tt.args.orderID, tt.args.recipientID, tt.args.storageTime, tt.args.cost, tt.args.weight, tt.args.packaging, tt.args.additionalFilm)
 			tt.wantErr(t, err)
 		})
 	}
-
 }
 
 func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
@@ -119,11 +114,6 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 		orderID string
 	}
 
-	ctrl := minimock.NewController(t)
-	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
-
-	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
-
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -131,7 +121,7 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		setup   func()
+		setup   func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock)
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -139,11 +129,12 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 			args: args{
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					PVZID: pvzID,
-				}, nil)
-				repoMock.DeleteOrderMock.Return(nil)
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock) {
+				cacheMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{PVZID: pvzID, ReceivedAt: time.Now().Add(-3 * time.Hour), StorageTime: 2 * time.Hour}
+				repoMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cacheMock.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
+				repoMock.DeleteOrderMock.Expect(minimock.AnyContext, "orderID").Return(nil)
 			},
 			wantErr: assert.NoError,
 		},
@@ -152,9 +143,9 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 			args: args{
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{}, domain.ErrNotFound)
-
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock) {
+				cacheMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				repoMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, domain.ErrNotFound)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrNotFound)
@@ -165,10 +156,11 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 			args: args{
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					PVZID: "anotherPVZID",
-				}, nil)
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock) {
+				cacheMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{PVZID: "anotherPVZID", ReceivedAt: time.Now().Add(-3 * time.Hour), StorageTime: 2 * time.Hour}
+				repoMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cacheMock.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -179,11 +171,11 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 			args: args{
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					IssuedAt: time.Now(),
-				}, nil)
-
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock) {
+				cacheMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{ReceivedAt: time.Now(), StorageTime: 2 * time.Hour}
+				repoMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cacheMock.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -194,10 +186,11 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 			args: args{
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					IssuedAt: time.Now(),
-				}, nil)
+			setup: func(repoMock *mocks.PVZOrderRepositoryMock, cacheMock *mocks.PVZOrderCacheMock) {
+				cacheMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{IssuedAt: time.Now()}
+				repoMock.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cacheMock.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -207,8 +200,13 @@ func TestPVZOrderUseCase_ReturnOrderDelivery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := useCase.ReturnOrderDelivery(ctx, tt.args.orderID)
+			t.Parallel()
+			ctrl := minimock.NewController(t)
+			repo := mocks.NewPVZOrderRepositoryMock(ctrl)
+			cache := mocks.NewPVZOrderCacheMock(ctrl)
+			uc := NewPVZOrderUseCase(repo, nil, pvzID, cache)
+			tt.setup(repo, cache)
+			err := uc.ReturnOrderDelivery(ctx, tt.args.orderID)
 			tt.wantErr(t, err)
 		})
 	}
@@ -223,11 +221,6 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 		orderIDs []string
 	}
 
-	ctrl := minimock.NewController(t)
-	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
-
-	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
-
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -235,7 +228,7 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		setup   func()
+		setup   func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock)
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -243,14 +236,18 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 			args: args{
 				orderIDs: []string{"orderID"},
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{
+					OrderID:     "orderID",
 					RecipientID: "userID",
 					PVZID:       pvzID,
 					ReceivedAt:  time.Now().Add(-1 * time.Hour),
 					StorageTime: 2 * time.Hour,
-				}, nil)
-				repoMock.SetOrderIssuedMock.Return(nil)
+				}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
+				repo.SetOrderIssuedMock.Expect(minimock.AnyContext, "orderID").Return(nil)
 			},
 			wantErr: assert.NoError,
 		},
@@ -259,8 +256,9 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 			args: args{
 				orderIDs: []string{"orderID"},
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{}, domain.ErrNotFound)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, domain.ErrNotFound)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrNotFound)
@@ -271,27 +269,39 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 			args: args{
 				orderIDs: []string{"orderID"},
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{
+					OrderID:     "orderID",
 					RecipientID: "userID",
 					PVZID:       "anotherPVZID",
 					IssuedAt:    time.Now(),
-				}, nil)
+					ReceivedAt:  time.Now().Add(-1 * time.Hour),
+					StorageTime: 2 * time.Hour,
+				}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
 			},
 		},
 		{
-			name: "Order is not issued",
+			name: "Order storage time expired",
 			args: args{
 				orderIDs: []string{"orderID"},
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{
+					OrderID:     "orderID",
 					RecipientID: "userID",
 					PVZID:       pvzID,
-				}, nil)
+					ReceivedAt:  time.Now().Add(-3 * time.Hour),
+					StorageTime: 2 * time.Hour,
+				}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -302,17 +312,34 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 			args: args{
 				orderIDs: []string{"orderID", "anotherOrderID"},
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "userID",
-					PVZID:       pvzID,
-					IssuedAt:    time.Now(),
-				}, nil)
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "anotherUserID",
-					PVZID:       pvzID,
-					IssuedAt:    time.Now(),
-				}, nil)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				// Allow any order of calls and return data based on orderID
+				cache.GetOrderMock.Set(func(_ context.Context, id string) (domain.PVZOrder, error, bool) {
+					return domain.PVZOrder{}, nil, false
+				})
+				repo.GetOrderMock.Set(func(_ context.Context, id string) (domain.PVZOrder, error) {
+					switch id {
+					case "orderID":
+						return domain.PVZOrder{
+							OrderID:     "orderID",
+							RecipientID: "userID",
+							PVZID:       pvzID,
+							ReceivedAt:  time.Now().Add(-1 * time.Hour),
+							StorageTime: 2 * time.Hour,
+						}, nil
+					case "anotherOrderID":
+						return domain.PVZOrder{
+							OrderID:     "anotherOrderID",
+							RecipientID: "anotherUserID",
+							PVZID:       pvzID,
+							ReceivedAt:  time.Now().Add(-1 * time.Hour),
+							StorageTime: 2 * time.Hour,
+						}, nil
+					default:
+						return domain.PVZOrder{}, errors.New("unexpected id")
+					}
+				})
+				cache.SetOrderMock.Set(func(_ context.Context, _ domain.PVZOrder) error { return nil })
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -322,8 +349,13 @@ func TestPVZOrderUseCase_GiveOrderToClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := useCase.GiveOrderToClient(ctx, tt.args.orderIDs)
+			t.Parallel()
+			ctrl := minimock.NewController(t)
+			repo := mocks.NewPVZOrderRepositoryMock(ctrl)
+			cache := mocks.NewPVZOrderCacheMock(ctrl)
+			uc := NewPVZOrderUseCase(repo, nil, pvzID, cache)
+			tt.setup(repo, cache)
+			err := uc.GiveOrderToClient(ctx, tt.args.orderIDs)
 			tt.wantErr(t, err)
 		})
 	}
@@ -340,8 +372,9 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 
 	ctrl := minimock.NewController(t)
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
+	cacheMock := mocks.NewPVZOrderCacheMock(ctrl)
 
-	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID, cacheMock)
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -359,12 +392,18 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 				userID: "userID",
 			},
 			setup: func() {
-				repoMock.GetOrdersMock.Return([]domain.PVZOrder{
-					{
-						RecipientID: "userID",
-						PVZID:       pvzID,
-					},
-				}, nil)
+				cacheMock.GetOrdersMock.Expect(minimock.AnyContext, "userID").Return(nil, nil, false)
+				got := []domain.PVZOrder{{RecipientID: "userID", PVZID: pvzID}}
+				repoMock.GetOrdersMock.Expect(minimock.AnyContext, "userID").Return(got, nil)
+				cacheMock.SetGetOrdersMock.Expect(minimock.AnyContext, "userID", got).Return(nil)
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "Cache hit",
+			args: args{userID: "userID"},
+			setup: func() {
+				cacheMock.GetOrdersMock.Expect(minimock.AnyContext, "userID").Return([]domain.PVZOrder{{RecipientID: "userID", PVZID: pvzID}}, nil, true)
 			},
 			wantErr: assert.NoError,
 		},
@@ -374,7 +413,10 @@ func TestPVZOrderUseCase_GetOrders(t *testing.T) {
 				userID: "userID",
 			},
 			setup: func() {
-				repoMock.GetOrdersMock.Return([]domain.PVZOrder{}, nil)
+				cacheMock.GetOrdersMock.Expect(minimock.AnyContext, "userID").Return(nil, nil, false)
+				got := []domain.PVZOrder{}
+				repoMock.GetOrdersMock.Expect(minimock.AnyContext, "userID").Return(got, nil)
+				cacheMock.SetGetOrdersMock.Expect(minimock.AnyContext, "userID", got).Return(nil)
 			},
 			wantErr: assert.NoError,
 		},
@@ -399,11 +441,6 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 		orderID string
 	}
 
-	ctrl := minimock.NewController(t)
-	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
-
-	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
-
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -411,7 +448,7 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		setup   func()
+		setup   func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock)
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -420,12 +457,12 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "userID",
-					IssuedAt:    time.Now().Add(-(TimeForReturn - time.Hour)),
-				}, nil)
-				repoMock.SetOrderReturnedMock.Return(nil)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{RecipientID: "userID", IssuedAt: time.Now().Add(-(TimeForReturn - time.Hour))}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
+				repo.SetOrderReturnedMock.Expect(minimock.AnyContext, "orderID").Return(nil)
 			},
 			wantErr: assert.NoError,
 		},
@@ -435,9 +472,9 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{}, domain.ErrNotFound)
-
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, domain.ErrNotFound)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrNotFound)
@@ -449,11 +486,11 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "anotherUserID",
-				}, nil)
-
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{RecipientID: "anotherUserID"}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -466,11 +503,11 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "userID",
-					ReturnedAt:  time.Now(),
-				}, nil)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{RecipientID: "userID", ReturnedAt: time.Now()}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -482,10 +519,11 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "userID",
-				}, nil)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{RecipientID: "userID"}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -497,11 +535,11 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 				userID:  "userID",
 				orderID: "orderID",
 			},
-			setup: func() {
-				repoMock.GetOrderMock.Return(domain.PVZOrder{
-					RecipientID: "userID",
-					IssuedAt:    time.Now().Add(-(TimeForReturn + time.Hour)),
-				}, nil)
+			setup: func(repo *mocks.PVZOrderRepositoryMock, cache *mocks.PVZOrderCacheMock) {
+				cache.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(domain.PVZOrder{}, nil, false)
+				order := domain.PVZOrder{RecipientID: "userID", IssuedAt: time.Now().Add(-(TimeForReturn + time.Hour))}
+				repo.GetOrderMock.Expect(minimock.AnyContext, "orderID").Return(order, nil)
+				cache.SetOrderMock.Expect(minimock.AnyContext, order).Return(nil)
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && errors.Is(err, domain.ErrInvalidArgument)
@@ -511,8 +549,13 @@ func TestPVZOrderUseCase_AcceptReturn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := useCase.AcceptReturn(ctx, tt.args.userID, tt.args.orderID)
+			t.Parallel()
+			ctrl := minimock.NewController(t)
+			repo := mocks.NewPVZOrderRepositoryMock(ctrl)
+			cache := mocks.NewPVZOrderCacheMock(ctrl)
+			uc := NewPVZOrderUseCase(repo, nil, pvzID, cache)
+			tt.setup(repo, cache)
+			err := uc.AcceptReturn(ctx, tt.args.userID, tt.args.orderID)
 			tt.wantErr(t, err)
 		})
 	}
@@ -525,8 +568,9 @@ func TestPVZOrderUseCase_GetReturns(t *testing.T) {
 
 	ctrl := minimock.NewController(t)
 	repoMock := mocks.NewPVZOrderRepositoryMock(ctrl)
+	cacheMock := mocks.NewPVZOrderCacheMock(ctrl)
 
-	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID)
+	useCase := NewPVZOrderUseCase(repoMock, nil, pvzID, cacheMock)
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -538,20 +582,29 @@ func TestPVZOrderUseCase_GetReturns(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "Success",
+			name: "Success (cache miss)",
 			setup: func() {
-				repoMock.GetReturnsMock.Return([]domain.PVZOrder{
-					{
-						PVZID: pvzID,
-					},
-				}, nil)
+				cacheMock.GetReturnsMock.Expect(minimock.AnyContext).Return(nil, nil, false)
+				got := []domain.PVZOrder{{PVZID: pvzID}}
+				repoMock.GetReturnsMock.Expect(minimock.AnyContext).Return(got, nil)
+				cacheMock.SetGetReturnsMock.Expect(minimock.AnyContext, got).Return(nil)
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "Success (cache hit)",
+			setup: func() {
+				cacheMock.GetReturnsMock.Expect(minimock.AnyContext).Return([]domain.PVZOrder{{PVZID: pvzID}}, nil, true)
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "No returns",
 			setup: func() {
-				repoMock.GetReturnsMock.Return([]domain.PVZOrder{}, nil)
+				cacheMock.GetReturnsMock.Expect(minimock.AnyContext).Return(nil, nil, false)
+				got := []domain.PVZOrder{}
+				repoMock.GetReturnsMock.Expect(minimock.AnyContext).Return(got, nil)
+				cacheMock.SetGetReturnsMock.Expect(minimock.AnyContext, got).Return(nil)
 			},
 			wantErr: assert.NoError,
 		},

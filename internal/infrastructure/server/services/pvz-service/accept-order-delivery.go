@@ -44,5 +44,5 @@ func (p *PVZService) AcceptOrderDelivery(ctx context.Context, req *desc.AcceptOr
 		return nil, err
 	}
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }

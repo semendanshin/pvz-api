@@ -2,11 +2,12 @@ package packager
 
 import (
 	"errors"
-	"github.com/gojuno/minimock/v3"
-	"github.com/stretchr/testify/assert"
 	"homework/internal/domain"
 	"homework/internal/usecases/packager/mocks"
 	"testing"
+
+	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOrderPackager_PackageOrder(t *testing.T) {
@@ -59,6 +60,7 @@ func TestOrderPackager_PackageOrder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			o := &OrderPackager{
 				strategies: tt.fields.strategies,
 			}

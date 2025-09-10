@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
 	"homework/internal/metrics"
 	"slices"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
 
 	"homework/internal/abstractions"
 	"homework/internal/domain"
@@ -24,6 +25,7 @@ var _ abstractions.IPVZOrderUseCase = &PVZOrderUseCase{}
 
 //go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i PVZOrderRepository -s _mock.go -o ./mocks
 //go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i OrderPackagerInterface -s _mock.go -o ./mocks
+//go:generate go run github.com/gojuno/minimock/v3/cmd/minimock -g -i PVZOrderCache -s _mock.go -o ./mocks
 
 // PVZOrderRepository is an interface for order repository
 type PVZOrderRepository interface {

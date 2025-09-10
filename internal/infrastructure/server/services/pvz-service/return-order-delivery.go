@@ -25,5 +25,5 @@ func (p *PVZService) ReturnOrderDelivery(ctx context.Context, req *desc.ReturnOr
 		return nil, err
 	}
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }

@@ -64,6 +64,10 @@ func convertMsg(in *sarama.ConsumerMessage) (domain.Event, error) {
 func TestPublisher(t *testing.T) {
 	t.Parallel()
 
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	const topic = "test-topic"
 
 	ctx := context.Background()

@@ -9,6 +9,7 @@ import (
 	"homework/cmd/cli/cmds"
 	"homework/internal/abstractions"
 	"homework/internal/domain"
+	cacheinmem "homework/internal/infrastructure/clients/cache/inmemmory"
 	"homework/internal/infrastructure/repositories/pvzorder/pgx"
 	"homework/internal/infrastructure/repositories/utils/pgx/txmanager"
 	"homework/internal/usecases"
@@ -73,10 +74,14 @@ func initUseCase(pvzID string, pool *pgxpool.Pool) abstractions.IPVZOrderUseCase
 		},
 	)
 
+	// Simple in-memory cache with TTL and LRU strategy
+	cache := cacheinmem.NewPVZOrder(5*60*1e9, 1000, cacheinmem.NewLRUInvalidationStrategy[string, interface{}]())
+
 	return usecases.NewPVZOrderUseCase(
 		pvzOrderRepoFacade,
 		orderPackager,
 		pvzID,
+		cache,
 	)
 }
 

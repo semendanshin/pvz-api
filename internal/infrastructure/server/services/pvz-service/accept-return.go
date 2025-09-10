@@ -26,5 +26,5 @@ func (p *PVZService) AcceptReturn(ctx context.Context, req *desc.AcceptReturnReq
 		return nil, err
 	}
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
