@@ -8,6 +8,8 @@ DATABASE_COMPOSE_FILE = database/db-compose.yaml
 KAFKA_COMPOSE_FILE = kafka/kafka-compose.yaml
 NOTIFIER_COMPOSE_FILE = docker/notifier/compose.yaml
 JAEGER_COMPOSE_FILE = jaeger/jaeger-compose.yaml
+E2E_SERVER_PID = .e2e_server.pid
+E2E_SERVER_LOG = .e2e_server.log
 
 cognitive-lint:
 	@echo "Running cognitive complexity linting..."
@@ -148,3 +150,47 @@ generate:
 deps: install-deps bin-deps
 
 all: deps generate build-and-run
+
+# --------------------
+# E2E orchestration
+# --------------------
+
+.PHONY: e2e-up e2e-test e2e-down e2e
+
+e2e-up: goose-install run-db
+	@echo "Applying migrations..."
+	@echo "Waiting for Postgres to be healthy..." 
+	@for i in $$(seq 1 60); do \
+		status=$$(docker inspect --format='{{.State.Health.Status}}' pvz_db 2>/dev/null || echo "starting"); \
+		if [ "$$status" = "healthy" ]; then echo "Postgres is healthy"; break; fi; \
+		printf "."; sleep 1; \
+	done
+	@GOOSE_URL='host=localhost port=5430 user=test password=test dbname=test sslmode=disable' && \
+		goose -dir ./migrations postgres "$$GOOSE_URL" up
+	@echo "Starting API server..."
+	@PVZ_ID=PVZ-1 \
+		POSTGRES_HOST=localhost \
+		POSTGRES_PORT=5430 \
+		POSTGRES_USERNAME=test \
+		POSTGRES_PASSWORD=test \
+		POSTGRES_DATABASE=test \
+		nohup go run cmd/grpc-server/main.go > $(E2E_SERVER_LOG) 2>&1 & echo $$! > $(E2E_SERVER_PID)
+	@printf "Waiting for HTTP gateway to be ready"
+	@for i in $$(seq 1 60); do \
+		if curl -sSf http://localhost:8081/metrics >/dev/null 2>&1; then echo "\nGateway is up"; break; fi; \
+		printf "."; sleep 0.5; \
+		done
+
+e2e-test:
+	@echo "Running E2E tests..."
+	@E2E=1 go test -v ./test/e2e
+
+e2e-down:
+	@echo "Stopping API server and database..."
+	@-if [ -f $(E2E_SERVER_PID) ]; then kill $$(cat $(E2E_SERVER_PID)) >/dev/null 2>&1 || true; rm -f $(E2E_SERVER_PID); fi
+	@docker compose -f $(DATABASE_COMPOSE_FILE) down
+
+e2e: ## Run full E2E cycle (up -> test -> down)
+	@set -e; trap '$(MAKE) e2e-down' EXIT; \
+	$(MAKE) e2e-up; \
+	$(MAKE) e2e-test
